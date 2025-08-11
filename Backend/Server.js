@@ -1,17 +1,13 @@
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const http = require('http');
-const WebSocket = require('ws');
 require('dotenv').config();
 
 const allowedOrigins = require('./cors/corsOrigins');
 const authRoute = require('./authRoutes/auth');
-const authenticateToken = require('./middleware/AuthenticationToken');
 const Notification = require('./Notification.js/Notification');
 const qrCode = require('./Qr Routes/qr');
 const attendance = require('./attendance.js/attendance');
-const faceUsersRoutes = require('./attendance.js/face-users');
 const department = require('./Department/Department');
 const designation = require('./Designation/Designation');
 const LocationCoordinates = require('./LocationCoordinates/locationRoutes');
@@ -23,26 +19,6 @@ const CreateMember = require('./createmembers/createMembers');
 
 const app = express();
 const port = process.env.PORT || 5000;
-const server = http.createServer(app);
-
-// WebSocket setup
-const wss = new WebSocket.Server({ path: '/api/ws', server });
-const { wsClients, broadcastNewSubmission, broadcastStatusUpdate } = require('./DashborderController/FormSubmissionCounter');
-
-// WebSocket connection handling
-wss.on('connection', (ws, req) => {
-  console.log('WebSocket client connected:', req.headers.origin);
-  wsClients.add(ws);
-
-  ws.on('close', () => {
-    console.log('WebSocket client disconnected');
-    wsClients.delete(ws);
-  });
-
-  ws.on('error', (error) => {
-    console.error('WebSocket error:', error);
-  });
-});
 
 // Middleware
 app.use(helmet());
@@ -92,10 +68,6 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-server.listen(port, () => {
+app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
-  console.log(`WebSocket server is running at ws://localhost:${port}/api/ws`);
 });
-
-// Export broadcast functions for use in other routes
-module.exports = { broadcastNewSubmission, broadcastStatusUpdate };

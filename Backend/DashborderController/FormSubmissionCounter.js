@@ -8,9 +8,6 @@ const { query, validationResult, body } = require('express-validator');
 // Initialize cache with 5-minute TTL
 const cache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
 
-// WebSocket clients
-const wsClients = new Set();
-
 // Input validation middleware for list endpoint
 const validateQuery = [
   query('status')
@@ -96,41 +93,6 @@ async function getAdminId(userId) {
   } catch (error) {
     throw new Error(`Failed to fetch admin ID: ${error.message}`);
   }
-}
-
-// Broadcast new submission
-function broadcastNewSubmission(submission) {
-  const broadcastData = {
-    type: 'new_submission',
-    submission: {
-      id: submission.id,
-      name: submission.name,
-      email: submission.email,
-      status: submission.status,
-      created_at: submission.created_at,
-    },
-  };
-  wsClients.forEach((client) => {
-    if (client.readyState === client.OPEN) {
-      client.send(JSON.stringify(broadcastData));
-    }
-  });
-}
-
-// Broadcast status update
-function broadcastStatusUpdate(submissionId, status) {
-  const broadcastData = {
-    type: 'status_update',
-    submission: {
-      id: submissionId,
-      status,
-    },
-  };
-  wsClients.forEach((client) => {
-    if (client.readyState === client.OPEN) {
-      client.send(JSON.stringify(broadcastData));
-    }
-  });
 }
 
 // GET: /submission/counter
@@ -315,9 +277,6 @@ router.post('/submission/status', validateStatusUpdate, handleValidationErrors, 
       [status, submissionId]
     );
 
-    // Broadcast status update
-    broadcastStatusUpdate(submissionId, status);
-
     // Clear relevant cache
     cache.del(cache.keys().filter((key) => key.startsWith(`list_${userIdToUse}`) || key === `counter_${userIdToUse}` || key === `today_${userIdToUse}` || key === `trends_${userIdToUse}`));
 
@@ -346,6 +305,3 @@ router.post('/contact', validateContact, handleValidationErrors, authenticateTok
 });
 
 module.exports = router;
-module.exports.wsClients = wsClients;
-module.exports.broadcastNewSubmission = broadcastNewSubmission;
-module.exports.broadcastStatusUpdate = broadcastStatusUpdate;

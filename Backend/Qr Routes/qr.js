@@ -1,4 +1,3 @@
-
 const express = require('express');
 const router = express.Router();
 const database = require('../database/mysql');
@@ -305,6 +304,32 @@ router.post('/qrcodes/validate/:code', async (req, res) => {
   } catch (error) {
     console.error('QR code validation error:', error);
     res.status(500).json({ message: 'Internal Server Error', withinRange: false, error: error.message });
+  }
+});
+
+// Check if location is required for QR code
+router.get('/qrcodes/:code/location', async (req, res) => {
+  try {
+    const { code } = req.params;
+    const [qrCode] = await database.query('SELECT user_id FROM qrcodes WHERE code = ?', [code]);
+    if (!qrCode.length) {
+      return res.status(404).json({ message: 'QR code not found' });
+    }
+
+    const user_id = qrCode[0].user_id;
+    const [location] = await database.query(
+      `SELECT id FROM LocationCoordinates WHERE user_id = ?`,
+      [user_id]
+    );
+
+    const required = location.length > 0;
+    res.json({
+      required,
+      message: required ? 'Location validation required' : 'No location validation needed'
+    });
+  } catch (error) {
+    console.error('Location Check Error:', error);
+    res.status(500).json({ message: 'Failed to check location requirement', error: error.message });
   }
 });
 
