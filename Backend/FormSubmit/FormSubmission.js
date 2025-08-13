@@ -1,4 +1,3 @@
-
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
@@ -8,6 +7,7 @@ const path = require('path');
 require('dotenv').config({ path: 'E:\\JobPortal\\VocalHeartVisit\\Backend\\.env' });
 const database = require('../database/mysql');
 const authenticationToken = require('../middleware/AuthenticationToken');
+const transporter = require('../database/Nodemailer'); // Import nodemailer transporter
 
 // Validate environment variables
 const requiredEnvVars = ['B2_ENDPOINT', 'B2_KEY_ID', 'B2_KEY', 'B2_BUCKET_NAME'];
@@ -61,7 +61,6 @@ router.post('/form/:code/submit', upload.single('resume'), async (req, res) => {
     if (!qrCode.length) {
       return res.status(404).json({ message: 'Invalid QR code' });
     }
-
     const { id: qr_code_id, user_id } = qrCode[0];
 
     const [appType] = await database.query(
@@ -91,6 +90,7 @@ router.post('/form/:code/submit', upload.single('resume'), async (req, res) => {
       }
       departmentNameToStore = dept[0].name;
     }
+
     // Upload resume to Backblaze B2
     let resumeUrl = null;
     if (resume) {
@@ -147,6 +147,99 @@ router.post('/form/:code/submit', upload.single('resume'), async (req, res) => {
       [user_id, 'Form Submission', notiMessage]
     );
 
+    // Fetch user email for notification
+   // Fetch user email for notification
+    const [user] = await database.query('SELECT email FROM users WHERE id = ?', [user_id]);
+    if (user.length && user[0].email) {
+      const mailOptions = {
+        from: '"VocalHeart Tech" <vocalheart.tech@gmail.com>',
+        to: user[0].email,
+        subject: 'New Form Submission Received',
+        text: `You have received a new ${appType[0].name} submission from "${name}" for ${designation}. Please review it in your dashboard.`,
+        html: `
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>New Form Submission</title>
+          </head>
+          <body style="margin: 0; padding: 0; font-family: 'Roboto', Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #1F2937; background-color: #F9FAFB;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 20px auto; background-color: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden;">
+              <tr>
+                <td style="background-color: #DB2777; padding: 20px; text-align: center;">
+                  <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #FFFFFF;">New Form Submission</h1>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 24px;">
+                  <p style="margin: 0 0 16px; font-size: 14px; color: #1F2937;">
+                    You have received a new <strong>${appType[0].name}</strong> submission from <strong>${name}</strong> for <strong>${designation}</strong>.
+                  </p>
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 16px;">
+                    <tr>
+                      <td style="padding: 8px 0; font-size: 14px; color: #6B7280;"><strong>Name:</strong></td>
+                      <td style="padding: 8px 0; font-size: 14px; color: #1F2937;">${name}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 8px 0; font-size: 14px; color: #6B7280;"><strong>Email:</strong></td>
+                      <td style="padding: 8px 0; font-size: 14px; color: #1F2937;">${email}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 8px 0; font-size: 14px; color: #6B7280;"><strong>Designation:</strong></td>
+                      <td style="padding: 8px 0; font-size: 14px; color: #1F2937;">${designation}</td>
+                    </tr>
+                    ${departmentNameToStore ? `
+                    <tr>
+                      <td style="padding: 8px 0; font-size: 14px; color: #6B7280;"><strong>Department:</strong></td>
+                      <td style="padding: 8px 0; font-size: 14px; color: #1F2937;">${departmentNameToStore}</td>
+                    </tr>` : ''}
+                    ${reason ? `
+                    <tr>
+                      <td style="padding: 8px 0; font-size: 14px; color: #6B7280;"><strong>Reason:</strong></td>
+                      <td style="padding: 8px 0; font-size: 14px; color: #1F2937;">${reason}</td>
+                    </tr>` : ''}
+                    ${resumeUrl ? `
+                    <tr>
+                      <td style="padding: 8px 0; font-size: 14px; color: #6B7280;"><strong>Resume:</strong></td>
+                      <td style="padding: 8px 0; font-size: 14px; color: #1F2937;">A resume file has been uploaded.</td>
+                    </tr>` : ''}
+                  </table>
+                  <a
+                    href="${process.env.DASHBOARD_URL}/dashboard"
+                    style="display: inline-block; padding: 12px 24px; background-color: #DB2777; color: #FFFFFF; font-size: 14px; font-weight: 500; text-decoration: none; border-radius: 6px; text-align: center; margin-top: 16px;"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    role="button"
+                    aria-label="Review submission in dashboard"
+                  >
+                    Review Submission
+                  </a>
+                </td>
+              </tr>
+              <tr>
+                <td style="background-color: #F3F4F6; padding: 16px; text-align: center; font-size: 12px; color: #6B7280;">
+                  <p style="margin: 0;">Sent by <strong>VocalHeart Tech</strong></p>
+                  <p style="margin: 4px 0 0;">
+                    Need help? <a href="mailto:support@vocalheart.tech" style="color: #DB2777; text-decoration: none;">Contact Support</a>
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </body>
+          </html>`,
+      };
+      try {
+        await transporter.sendMail(mailOptions);
+        console.log('Email notification sent to:', user[0].email);
+      } catch (emailError) {
+        console.error('Email sending error:', emailError);
+        // Not failing the request, just logging the error
+      }
+    } else {
+      console.warn('No user email found for user_id:', user_id);
+    }
+
     res.status(201).json({
       message: 'Form submitted successfully',
       user_id,
@@ -177,7 +270,6 @@ router.get('/form/resume/:id', authenticationToken, async (req, res) => {
   try {
     let submissionQuery;
     let queryParams;
-
     if (req.user.role === 'member') {
       // For members, fetch submission where user_id matches their created_by
       const [user] = await database.query('SELECT created_by FROM users WHERE id = ?', [req.user.id]);
@@ -219,11 +311,9 @@ router.get('/form/resume/:id', authenticationToken, async (req, res) => {
     // Determine content type and disposition
     const extension = fileKey.split('.').pop().toLowerCase();
     let contentType = 'application/octet-stream';
-    // Default to download
     let dispositionType = 'attachment'; 
     if (extension === 'pdf') {
       contentType = 'application/pdf';
-      // Allow in-browser viewing for PDFs 
       dispositionType = 'inline'; 
     } else if (extension === 'doc') {
       contentType = 'application/msword';
@@ -376,9 +466,10 @@ router.patch('/formDetails/:id/review', authenticationToken, async (req, res) =>
       [reviewed, id]
     );
     res.status(200).json({ message: `Submission marked as ${reviewed === 1 ? 'reviewed' : 'unreviewed'}` });
-  } catch (error){
+  } catch (error) {
     console.error('Error updating submission review status:', error);
     res.status(500).json({ message: 'Failed to update review status' });
   }
 });
+
 module.exports = router;
