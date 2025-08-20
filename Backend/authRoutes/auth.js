@@ -212,7 +212,13 @@ router.post('/verify-otp', async (req, res) => {
       [sanitizedEmail, otp, new Date()]
     );
 
-    if (tempSignups.length === 0 && tempResets.length === 0) {
+    // Check users for profile/email/password change OTP
+    const [users] = await pool.query(
+      'SELECT * FROM users WHERE email = ? AND otp = ? AND otp_expires > ?',
+      [sanitizedEmail, otp, new Date()]
+    );
+
+    if (tempSignups.length === 0 && tempResets.length === 0 && users.length === 0) {
       return res.status(400).json({
         error: 'Invalid OTP',
         message: 'The OTP is invalid or has expired',
@@ -417,6 +423,113 @@ router.post('/logout', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Logout Error:', error.message);
     res.status(500).json({ error: 'Server error', message: 'Failed to log out' });
+  }
+});
+
+// Request OTP (for authenticated users)
+router.post('/request-otp', authenticateToken, async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({
+      error: 'Validation failed',
+      message: 'Email is required',
+    });
+  }
+
+  try {
+    const sanitizedEmail = validator.normalizeEmail(email.toLowerCase());
+    if (sanitizedEmail !== req.user.email) {
+      return res.status(403).json({
+        error: 'Unauthorized',
+        message: 'Email does not match authenticated user',
+      });
+    }
+
+    const [users] = await pool.query('SELECT id FROM users WHERE email = ?', [sanitizedEmail]);
+    if (users.length === 0) {
+      return res.status(404).json({
+        error: 'User not found',
+        message: 'This email is not registered',
+      });
+    }
+
+    const otp = generateOtp();
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+
+    await pool.query('UPDATE users SET otp = ?, otp_expires = ? WHERE email = ?', [otp, otpExpires, sanitizedEmail]);
+
+    const mailOptions = {
+      from: '"VocalHeart Infotech Pvt. Ltd." <vocalheart.tech@gmail.com>',
+      to: sanitizedEmail,
+      subject: 'Your Account Verification Code',
+      html: `
+        <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e8e8e8; border-radius: 4px; color: #333;">
+          <div style="text-align: center; margin-bottom: 24px;">
+            <img src="https://i.ibb.co/gbPrfVSB/Whats-App-Image-2025-03-03-at-17-45-28-b944d3a4-removebg-preview-1.png" alt="VocalHeart Logo" style="height: 40px;">
+          </div>
+          <h1 style="font-size: 18px; font-weight: 500; color: #2d3748; margin-bottom: 16px;">Account Verification</h1>
+          <p style="font-size: 12px; line-height: 1.5; margin-bottom: 16px;">
+            You requested to update your account details. Please use the following verification code:
+          </p>
+          <div style="background: #f7fafc; border: 1px dashed #e2e8f0; border-radius: 4px; padding: 16px; text-align: center; margin: 24px 0;">
+            <span style="font-size: 24px; letter-spacing: 2px; font-weight: 600; color: #2d3748;">${otp}</span>
+          </div>
+          <p style="font-size: 12px; line-height: 1.5; margin-bottom: 16px;">
+            This code will expire in <strong>10 minutes</strong>. For security reasons, please do not share this code with anyone.
+          </p>
+          <p style="font-size: 12px; line-height: 1.5; margin-bottom: 24px;">
+            If you didn't initiate this request, please contact our support team immediately.
+          </p>
+          <div style="border-top: 1px solid #e8e8e8; padding-top: 16px;">
+            <p style="font-size: 11px; color: #718096; margin-bottom: 8px;">
+              Need help? <a href="https://vocalheart.com/support" style="color: #4299e1; text-decoration: none;">Contact our support team</a>
+            </p>
+            <p style="font-size: 11px; color: #718096; margin: 0;">
+              © ${new Date().getFullYear()} VocalHeart Infotech. All rights reserved.
+            </p>
+          </div>
+        </div>
+      `,
+    };
+
+    let attempts = 0;
+    const maxAttempts = 2;
+    let emailSent = false;
+    let lastError = null;
+
+    while (attempts < maxAttempts && !emailSent) {
+      try {
+        await transporter.sendMail(mailOptions);
+        emailSent = true;
+      } catch (error) {
+        attempts++;
+        lastError = error;
+        console.warn(`Email sending attempt ${attempts} failed:`, error.message);
+        if (attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+    }
+
+    if (!emailSent) {
+      console.error('Failed to send OTP email after retries:', lastError.message);
+      return res.status(500).json({
+        error: 'Email error',
+        message: 'Failed to send verification code. Please try again later.',
+      });
+    }
+
+    res.status(200).json({
+      message: 'Verification code sent',
+      data: { details: 'A 6-digit verification code has been sent to your email.' },
+    });
+  } catch (error) {
+    console.error('Request OTP Error:', error.message);
+    res.status(500).json({
+      error: 'Server error',
+      message: 'Failed to send verification code',
+    });
   }
 });
 
@@ -771,6 +884,90 @@ router.get('/me', authenticateToken, async (req, res) => {
     res.status(500).json({
       error: 'Server error',
       message: 'Failed to fetch user profile',
+    });
+  }
+});
+
+// Update User Profile
+router.put('/user/:id', authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  const { name, email, otp } = req.body;
+
+  if (!name || !email || !otp) {
+    return res.status(400).json({
+      error: 'Validation failed',
+      message: 'Name, email, and OTP are required',
+    });
+  }
+
+  if (!validator.isEmail(email)) {
+    return res.status(400).json({
+      error: 'Invalid email',
+      message: 'Please provide a valid email address',
+    });
+  }
+
+  if (!validator.isLength(name, { min: 2 })) {
+    return res.status(400).json({
+      error: 'Invalid name',
+      message: 'Name must be at least 2 characters long',
+    });
+  }
+
+  try {
+    const sanitizedEmail = validator.normalizeEmail(email.toLowerCase());
+    const sanitizedName = validator.escape(name.trim());
+
+    // Verify OTP
+    const [users] = await pool.query(
+      'SELECT id FROM users WHERE id = ? AND otp = ? AND otp_expires > ?',
+      [req.user.id, otp, new Date()]
+    );
+    if (users.length === 0) {
+      return res.status(400).json({
+        error: 'Invalid OTP',
+        message: 'The OTP is invalid or has expired',
+      });
+    }
+
+    // Check if user ID matches authenticated user
+    if (parseInt(id) !== req.user.id) {
+      return res.status(403).json({
+        error: 'Unauthorized',
+        message: 'You can only update your own profile',
+      });
+    }
+
+    // Check if new email is already in use
+    if (sanitizedEmail !== req.user.email) {
+      const [existingUser] = await pool.query('SELECT id FROM users WHERE email = ? AND id != ?', [sanitizedEmail, req.user.id]);
+      if (existingUser.length > 0) {
+        return res.status(400).json({
+          error: 'Email exists',
+          message: 'This email is already registered',
+        });
+      }
+    }
+
+    await pool.query(
+      'UPDATE users SET name = ?, email = ?, otp = NULL, otp_expires = NULL WHERE id = ?',
+      [sanitizedName, sanitizedEmail, req.user.id]
+    );
+
+    res.status(200).json({
+      message: 'Profile updated successfully',
+      data: {
+        id: req.user.id,
+        name: sanitizedName,
+        email: sanitizedEmail,
+        role: req.user.role,
+      },
+    });
+  } catch (error) {
+    console.error('Update Profile Error:', error.message);
+    res.status(500).json({
+      error: 'Server error',
+      message: 'Failed to update profile',
     });
   }
 });
