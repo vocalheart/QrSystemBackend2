@@ -27,6 +27,9 @@ const updateIpAddresses = (existingIps, newIp) => {
   return JSON.stringify(ipArray);
 };
 
+// Helper function to generate 6-digit OTP
+const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
+
 // Signup (only for admins)
 router.post('/signup', async (req, res) => {
   const { name, email, password, ip } = req.body;
@@ -243,6 +246,111 @@ router.post('/logout', authenticateToken, async (req, res) => {
   }
 });
 
+// Request OTP for Password Change
+router.post('/request-otp', authenticateToken, async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({
+      error: 'Validation failed',
+      message: 'Email is required',
+    });
+  }
+
+  try {
+    const sanitizedEmail = validator.normalizeEmail(email.toLowerCase());
+    const [users] = await pool.query('SELECT id FROM users WHERE email = ? AND id = ?', [sanitizedEmail, req.user.id]);
+    if (users.length === 0) {
+      return res.status(404).json({
+        error: 'User not found',
+        message: 'This email is not registered or does not match the authenticated user',
+      });
+    }
+
+    const otp = generateOtp();
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+
+    await pool.query('UPDATE users SET otp = ?, otp_expires = ? WHERE email = ?', [
+      otp,
+      otpExpires,
+      sanitizedEmail,
+    ]);
+
+    const mailOptions = {
+      from: '"VocalHeart Infotech Pvt. Ltd." <vocalheart.tech@gmail.com>',
+      to: sanitizedEmail,
+      subject: 'Your Password Change Verification Code',
+      html: `
+        <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e8e8e8; border-radius: 4px; color: #333;">
+          <div style="text-align: center; margin-bottom: 24px;">
+            <img src="https://i.ibb.co/gbPrfVSB/Whats-App-Image-2025-03-03-at-17-45-28-b944d3a4-removebg-preview-1.png" alt="VocalHeart Logo" style="height: 40px;">
+          </div>
+          <h1 style="font-size: 18px; font-weight: 500; color: #2d3748; margin-bottom: 16px;">Password Change Verification</h1>
+          <p style="font-size: 12px; line-height: 1.5; margin-bottom: 16px;">
+            You requested to change your password. Please use the following verification code:
+          </p>
+          <div style="background: #f7fafc; border: 1px dashed #e2e8f0; border-radius: 4px; padding: 16px; text-align: center; margin: 24px 0;">
+            <span style="font-size: 24px; letter-spacing: 2px; font-weight: 600; color: #2d3748;">${otp}</span>
+          </div>
+          <p style="font-size: 12px; line-height: 1.5; margin-bottom: 16px;">
+            This code will expire in <strong>10 minutes</strong>. For security reasons, please do not share this code with anyone.
+          </p>
+          <p style="font-size: 12px; line-height: 1.5; margin-bottom: 24px;">
+            If you didn't request this password change, please contact our support team immediately.
+          </p>
+          <div style="border-top: 1px solid #e8e8e8; padding-top: 16px;">
+            <p style="font-size: 11px; color: #718096; margin-bottom: 8px;">
+              Need help? <a href="https://vocalheart.com/support" style="color: #4299e1; text-decoration: none;">Contact our support team</a>
+            </p>
+            <p style="font-size: 11px; color: #718096; margin: 0;">
+              © ${new Date().getFullYear()} VocalHeart Infotech. All rights reserved.
+            </p>
+          </div>
+        </div>
+      `,
+    };
+
+    // Attempt to send email with retry
+    let attempts = 0;
+    const maxAttempts = 2;
+    let emailSent = false;
+    let lastError = null;
+
+    while (attempts < maxAttempts && !emailSent) {
+      try {
+        await transporter.sendMail(mailOptions);
+        emailSent = true;
+      } catch (error) {
+        attempts++;
+        lastError = error;
+        console.warn(`Email sending attempt ${attempts} failed:`, error.message);
+        if (attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
+        }
+      }
+    }
+
+    if (!emailSent) {
+      console.error('Failed to send OTP email after retries:', lastError.message);
+      return res.status(500).json({
+        error: 'Email error',
+        message: 'Failed to send verification code. Please try again later.',
+      });
+    }
+
+    res.status(200).json({
+      message: 'Verification code sent',
+      data: { details: 'A 6-digit verification code has been sent to your email.' },
+    });
+  } catch (error) {
+    console.error('Request OTP Error:', error.message);
+    res.status(500).json({
+      error: 'Server error',
+      message: 'Failed to send verification code',
+    });
+  }
+});
+
 // Forgot Password
 router.post('/forgot-password', async (req, res) => {
   const { email } = req.body;
@@ -264,7 +372,7 @@ router.post('/forgot-password', async (req, res) => {
       });
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = generateOtp();
     const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
     await pool.query('UPDATE users SET otp = ?, otp_expires = ? WHERE email = ?', [
@@ -307,7 +415,34 @@ router.post('/forgot-password', async (req, res) => {
       `,
     };
 
-    await transporter.sendMail(mailOptions);
+    // Attempt to send email with retry
+    let attempts = 0;
+    const maxAttempts = 2;
+    let emailSent = false;
+    let lastError = null;
+
+    while (attempts < maxAttempts && !emailSent) {
+      try {
+        await transporter.sendMail(mailOptions);
+        emailSent = true;
+      } catch (error) {
+        attempts++;
+        lastError = error;
+        console.warn(`Email sending attempt ${attempts} failed:`, error.message);
+        if (attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
+        }
+      }
+    }
+
+    if (!emailSent) {
+      console.error('Failed to send OTP email after retries:', lastError.message);
+      return res.status(500).json({
+        error: 'Email error',
+        message: 'Failed to send verification code. Please try again later.',
+      });
+    }
+
     res.status(200).json({
       message: 'Verification code sent',
       data: { details: 'A 6-digit verification code has been sent to your email.' },
@@ -354,6 +489,72 @@ router.post('/verify-otp', async (req, res) => {
     res.status(500).json({
       error: 'Server error',
       message: 'Failed to verify OTP',
+    });
+  }
+});
+
+// Change Password (with OTP verification)
+router.post('/change-password', authenticateToken, async (req, res) => {
+  const { currentPassword, newPassword, confirmPassword, otp } = req.body;
+
+  if (!currentPassword || !newPassword || !confirmPassword || !otp) {
+    return res.status(400).json({
+      error: 'Validation failed',
+      message: 'Current password, new password, confirm password, and OTP are required',
+    });
+  }
+
+  if (newPassword !== confirmPassword) {
+    return res.status(400).json({
+      error: 'Validation failed',
+      message: 'New password and confirm password do not match',
+    });
+  }
+
+  if (!validator.isLength(newPassword, { min: 8 })) {
+    return res.status(400).json({
+      error: 'Invalid password',
+      message: 'New password must be at least 8 characters long',
+    });
+  }
+
+  try {
+    const sanitizedEmail = validator.normalizeEmail(req.user.email.toLowerCase());
+    const [users] = await pool.query(
+      'SELECT id, password FROM users WHERE email = ? AND otp = ? AND otp_expires > ?',
+      [sanitizedEmail, otp, new Date()]
+    );
+    if (users.length === 0) {
+      return res.status(400).json({
+        error: 'Invalid OTP',
+        message: 'The OTP is invalid or has expired',
+      });
+    }
+
+    const user = users[0];
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(401).json({
+        error: 'Invalid credentials',
+        message: 'Current password is incorrect',
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await pool.query('UPDATE users SET password = ?, otp = NULL, otp_expires = NULL WHERE id = ?', [
+      hashedPassword,
+      user.id,
+    ]);
+
+    res.status(200).json({
+      message: 'Password changed successfully',
+      data: { email: sanitizedEmail },
+    });
+  } catch (error) {
+    console.error('Change Password Error:', error.message);
+    res.status(500).json({
+      error: 'Server error',
+      message: 'Failed to change password',
     });
   }
 });
