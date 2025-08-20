@@ -30,8 +30,8 @@ const updateIpAddresses = (existingIps, newIp) => {
 // Helper function to generate 6-digit OTP
 const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
 
-// Signup (only for admins)
-router.post('/signup', async (req, res) => {
+// Pre-signup (store temp data and send OTP)
+router.post('/pre-signup', async (req, res) => {
   const { name, email, password, ip } = req.body;
 
   if (!name || !email || !password) {
@@ -68,7 +68,14 @@ router.post('/signup', async (req, res) => {
       });
     }
 
+    const [existingTemp] = await pool.query('SELECT email FROM temp_signups WHERE email = ?', [sanitizedEmail]);
+    if (existingTemp.length > 0) {
+      await pool.query('DELETE FROM temp_signups WHERE email = ?', [sanitizedEmail]);
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
+    const otp = generateOtp();
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
     const ipAddresses = updateIpAddresses(null, clientIp);
 
     let city = 'Unknown', country = 'Unknown', region = 'Unknown';
@@ -100,10 +107,177 @@ router.post('/signup', async (req, res) => {
       city = country = region = 'Localhost';
     }
 
+    await pool.query(
+      'INSERT INTO temp_signups (name, email, password, ip_addresses, city, country, region, otp, otp_expires, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+      [sanitizedName, sanitizedEmail, hashedPassword, ipAddresses, city, country, region, otp, otpExpires]
+    );
+
+    const mailOptions = {
+      from: '"VocalHeart Infotech Pvt. Ltd." <vocalheart.tech@gmail.com>',
+      to: sanitizedEmail,
+      subject: 'Your Signup Verification Code',
+      html: `
+        <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e8e8e8; border-radius: 4px; color: #333;">
+          <div style="text-align: center; margin-bottom: 24px;">
+            <img src="https://i.ibb.co/gbPrfVSB/Whats-App-Image-2025-03-03-at-17-45-28-b944d3a4-removebg-preview-1.png" alt="VocalHeart Logo" style="height: 40px;">
+          </div>
+          <h1 style="font-size: 18px; font-weight: 500; color: #2d3748; margin-bottom: 16px;">Signup Verification</h1>
+          <p style="font-size: 12px; line-height: 1.5; margin-bottom: 16px;">
+            Thank you for signing up! Please use the following verification code to complete your registration:
+          </p>
+          <div style="background: #f7fafc; border: 1px dashed #e2e8f0; border-radius: 4px; padding: 16px; text-align: center; margin: 24px 0;">
+            <span style="font-size: 24px; letter-spacing: 2px; font-weight: 600; color: #2d3748;">${otp}</span>
+          </div>
+          <p style="font-size: 12px; line-height: 1.5; margin-bottom: 16px;">
+            This code will expire in <strong>10 minutes</strong>. For security reasons, please do not share this code with anyone.
+          </p>
+          <p style="font-size: 12px; line-height: 1.5; margin-bottom: 24px;">
+            If you didn't initiate this signup, please contact our support team immediately.
+          </p>
+          <div style="border-top: 1px solid #e8e8e8; padding-top: 16px;">
+            <p style="font-size: 11px; color: #718096; margin-bottom: 8px;">
+              Need help? <a href="https://vocalheart.com/support" style="color: #4299e1; text-decoration: none;">Contact our support team</a>
+            </p>
+            <p style="font-size: 11px; color: #718096; margin: 0;">
+              © ${new Date().getFullYear()} VocalHeart Infotech. All rights reserved.
+            </p>
+          </div>
+        </div>
+      `,
+    };
+
+    let attempts = 0;
+    const maxAttempts = 2;
+    let emailSent = false;
+    let lastError = null;
+
+    while (attempts < maxAttempts && !emailSent) {
+      try {
+        await transporter.sendMail(mailOptions);
+        emailSent = true;
+      } catch (error) {
+        attempts++;
+        lastError = error;
+        console.warn(`Email sending attempt ${attempts} failed:`, error.message);
+        if (attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+    }
+
+    if (!emailSent) {
+      console.error('Failed to send OTP email after retries:', lastError.message);
+      return res.status(500).json({
+        error: 'Email error',
+        message: 'Failed to send verification code. Please try again later.',
+      });
+    }
+
+    res.status(200).json({
+      message: 'Verification code sent',
+      data: { details: 'A 6-digit verification code has been sent to your email.' },
+    });
+  } catch (error) {
+    console.error('Pre-signup Error:', error.message);
+    res.status(500).json({
+      error: 'Server error',
+      message: 'Failed to initiate signup',
+    });
+  }
+});
+
+// Verify OTP
+router.post('/verify-otp', async (req, res) => {
+  const { email, otp } = req.body;
+
+  if (!email || !otp) {
+    return res.status(400).json({
+      error: 'Validation failed',
+      message: 'Email and OTP are required',
+    });
+  }
+
+  try {
+    const sanitizedEmail = validator.normalizeEmail(email.toLowerCase());
+
+    // Check temp_signups for signup OTP
+    const [tempSignups] = await pool.query(
+      'SELECT * FROM temp_signups WHERE email = ? AND otp = ? AND otp_expires > ?',
+      [sanitizedEmail, otp, new Date()]
+    );
+
+    // Check temp_resets for password reset OTP
+    const [tempResets] = await pool.query(
+      'SELECT * FROM temp_resets WHERE email = ? AND otp = ? AND otp_expires > ?',
+      [sanitizedEmail, otp, new Date()]
+    );
+
+    if (tempSignups.length === 0 && tempResets.length === 0) {
+      return res.status(400).json({
+        error: 'Invalid OTP',
+        message: 'The OTP is invalid or has expired',
+      });
+    }
+
+    res.status(200).json({
+      message: 'OTP verified successfully',
+      data: { email: sanitizedEmail },
+    });
+  } catch (error) {
+    console.error('OTP Verification Error:', error.message);
+    res.status(500).json({
+      error: 'Server error',
+      message: 'Failed to verify OTP',
+    });
+  }
+});
+
+// Signup (only for admins, after OTP verification)
+router.post('/signup', async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({
+      error: 'Validation error',
+      message: 'Email is required',
+    });
+  }
+
+  try {
+    const sanitizedEmail = validator.normalizeEmail(email.toLowerCase());
+    const [tempUsers] = await pool.query('SELECT * FROM temp_signups WHERE email = ?', [sanitizedEmail]);
+    if (tempUsers.length === 0) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        message: 'No pending signup found for this email',
+      });
+    }
+
+    const tempUser = tempUsers[0];
+    const [existingUser] = await pool.query('SELECT id FROM users WHERE email = ?', [sanitizedEmail]);
+    if (existingUser.length > 0) {
+      await pool.query('DELETE FROM temp_signups WHERE email = ?', [sanitizedEmail]);
+      return res.status(400).json({
+        error: 'Email exists',
+        message: 'This email is already registered',
+      });
+    }
+
     const [result] = await pool.query(
       'INSERT INTO users (name, email, password, ip_addresses, city, country, region, role, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())',
-      [sanitizedName, sanitizedEmail, hashedPassword, ipAddresses, city, country, region, 'admin']
+      [
+        tempUser.name,
+        sanitizedEmail,
+        tempUser.password,
+        tempUser.ip_addresses,
+        tempUser.city,
+        tempUser.country,
+        tempUser.region,
+        'admin',
+      ]
     );
+
+    await pool.query('DELETE FROM temp_signups WHERE email = ?', [sanitizedEmail]);
 
     const token = jwt.sign({ id: result.insertId, email: sanitizedEmail, role: 'admin' }, process.env.JWT_SECRET, {
       expiresIn: '7d',
@@ -115,12 +289,12 @@ router.post('/signup', async (req, res) => {
         token,
         user: {
           id: result.insertId,
-          name: sanitizedName,
+          name: tempUser.name,
           email: sanitizedEmail,
-          ip_addresses: JSON.parse(ipAddresses),
-          city,
-          region,
-          country,
+          ip_addresses: JSON.parse(tempUser.ip_addresses),
+          city: tempUser.city,
+          region: tempUser.region,
+          country: tempUser.country,
           role: 'admin',
         },
       },
@@ -246,111 +420,6 @@ router.post('/logout', authenticateToken, async (req, res) => {
   }
 });
 
-// Request OTP for Password Change
-router.post('/request-otp', authenticateToken, async (req, res) => {
-  const { email } = req.body;
-
-  if (!email) {
-    return res.status(400).json({
-      error: 'Validation failed',
-      message: 'Email is required',
-    });
-  }
-
-  try {
-    const sanitizedEmail = validator.normalizeEmail(email.toLowerCase());
-    const [users] = await pool.query('SELECT id FROM users WHERE email = ? AND id = ?', [sanitizedEmail, req.user.id]);
-    if (users.length === 0) {
-      return res.status(404).json({
-        error: 'User not found',
-        message: 'This email is not registered or does not match the authenticated user',
-      });
-    }
-
-    const otp = generateOtp();
-    const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
-
-    await pool.query('UPDATE users SET otp = ?, otp_expires = ? WHERE email = ?', [
-      otp,
-      otpExpires,
-      sanitizedEmail,
-    ]);
-
-    const mailOptions = {
-      from: '"VocalHeart Infotech Pvt. Ltd." <vocalheart.tech@gmail.com>',
-      to: sanitizedEmail,
-      subject: 'Your Password Change Verification Code',
-      html: `
-        <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e8e8e8; border-radius: 4px; color: #333;">
-          <div style="text-align: center; margin-bottom: 24px;">
-            <img src="https://i.ibb.co/gbPrfVSB/Whats-App-Image-2025-03-03-at-17-45-28-b944d3a4-removebg-preview-1.png" alt="VocalHeart Logo" style="height: 40px;">
-          </div>
-          <h1 style="font-size: 18px; font-weight: 500; color: #2d3748; margin-bottom: 16px;">Password Change Verification</h1>
-          <p style="font-size: 12px; line-height: 1.5; margin-bottom: 16px;">
-            You requested to change your password. Please use the following verification code:
-          </p>
-          <div style="background: #f7fafc; border: 1px dashed #e2e8f0; border-radius: 4px; padding: 16px; text-align: center; margin: 24px 0;">
-            <span style="font-size: 24px; letter-spacing: 2px; font-weight: 600; color: #2d3748;">${otp}</span>
-          </div>
-          <p style="font-size: 12px; line-height: 1.5; margin-bottom: 16px;">
-            This code will expire in <strong>10 minutes</strong>. For security reasons, please do not share this code with anyone.
-          </p>
-          <p style="font-size: 12px; line-height: 1.5; margin-bottom: 24px;">
-            If you didn't request this password change, please contact our support team immediately.
-          </p>
-          <div style="border-top: 1px solid #e8e8e8; padding-top: 16px;">
-            <p style="font-size: 11px; color: #718096; margin-bottom: 8px;">
-              Need help? <a href="https://vocalheart.com/support" style="color: #4299e1; text-decoration: none;">Contact our support team</a>
-            </p>
-            <p style="font-size: 11px; color: #718096; margin: 0;">
-              © ${new Date().getFullYear()} VocalHeart Infotech. All rights reserved.
-            </p>
-          </div>
-        </div>
-      `,
-    };
-
-    // Attempt to send email with retry
-    let attempts = 0;
-    const maxAttempts = 2;
-    let emailSent = false;
-    let lastError = null;
-
-    while (attempts < maxAttempts && !emailSent) {
-      try {
-        await transporter.sendMail(mailOptions);
-        emailSent = true;
-      } catch (error) {
-        attempts++;
-        lastError = error;
-        console.warn(`Email sending attempt ${attempts} failed:`, error.message);
-        if (attempts < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
-        }
-      }
-    }
-
-    if (!emailSent) {
-      console.error('Failed to send OTP email after retries:', lastError.message);
-      return res.status(500).json({
-        error: 'Email error',
-        message: 'Failed to send verification code. Please try again later.',
-      });
-    }
-
-    res.status(200).json({
-      message: 'Verification code sent',
-      data: { details: 'A 6-digit verification code has been sent to your email.' },
-    });
-  } catch (error) {
-    console.error('Request OTP Error:', error.message);
-    res.status(500).json({
-      error: 'Server error',
-      message: 'Failed to send verification code',
-    });
-  }
-});
-
 // Forgot Password
 router.post('/forgot-password', async (req, res) => {
   const { email } = req.body;
@@ -375,11 +444,10 @@ router.post('/forgot-password', async (req, res) => {
     const otp = generateOtp();
     const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
-    await pool.query('UPDATE users SET otp = ?, otp_expires = ? WHERE email = ?', [
-      otp,
-      otpExpires,
-      sanitizedEmail,
-    ]);
+    await pool.query(
+      'INSERT INTO temp_resets (email, otp, otp_expires) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE otp = ?, otp_expires = ?',
+      [sanitizedEmail, otp, otpExpires, otp, otpExpires]
+    );
 
     const mailOptions = {
       from: '"VocalHeart Infotech Pvt. Ltd." <vocalheart.tech@gmail.com>',
@@ -415,7 +483,6 @@ router.post('/forgot-password', async (req, res) => {
       `,
     };
 
-    // Attempt to send email with retry
     let attempts = 0;
     const maxAttempts = 2;
     let emailSent = false;
@@ -430,7 +497,7 @@ router.post('/forgot-password', async (req, res) => {
         lastError = error;
         console.warn(`Email sending attempt ${attempts} failed:`, error.message);
         if (attempts < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
+          await new Promise(resolve => setTimeout(resolve, 1000));
         }
       }
     }
@@ -456,44 +523,110 @@ router.post('/forgot-password', async (req, res) => {
   }
 });
 
-// Verify OTP
-router.post('/verify-otp', async (req, res) => {
-  const { email, otp } = req.body;
+// Resend OTP for Password Reset
+router.post('/resend-otp', async (req, res) => {
+  const { email } = req.body;
 
-  if (!email || !otp) {
+  if (!email) {
     return res.status(400).json({
       error: 'Validation failed',
-      message: 'Email and OTP are required',
+      message: 'Email is required',
     });
   }
 
   try {
     const sanitizedEmail = validator.normalizeEmail(email.toLowerCase());
-    const [users] = await pool.query(
-      'SELECT id FROM users WHERE email = ? AND otp = ? AND otp_expires > ?',
-      [sanitizedEmail, otp, new Date()]
-    );
+    const [users] = await pool.query('SELECT id FROM users WHERE email = ?', [sanitizedEmail]);
     if (users.length === 0) {
-      return res.status(400).json({
-        error: 'Invalid OTP',
-        message: 'The OTP is invalid or has expired',
+      return res.status(404).json({
+        error: 'User not found',
+        message: 'This email is not registered',
+      });
+    }
+
+    const otp = generateOtp();
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
+
+    await pool.query(
+      'INSERT INTO temp_resets (email, otp, otp_expires) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE otp = ?, otp_expires = ?',
+      [sanitizedEmail, otp, otpExpires, otp, otpExpires]
+    );
+
+    const mailOptions = {
+      from: '"VocalHeart Infotech Pvt. Ltd." <vocalheart.tech@gmail.com>',
+      to: sanitizedEmail,
+      subject: 'Your Password Reset Code',
+      html: `
+        <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e8e8e8; border-radius: 4px; color: #333;">
+          <div style="text-align: center; margin-bottom: 24px;">
+            <img src="https://i.ibb.co/gbPrfVSB/Whats-App-Image-2025-03-03-at-17-45-28-b944d3a4-removebg-preview-1.png" alt="VocalHeart Logo" style="height: 40px;">
+          </div>
+          <h1 style="font-size: 18px; font-weight: 500; color: #2d3748; margin-bottom: 16px;">Password Reset Request</h1>
+          <p style="font-size: 12px; line-height: 1.5; margin-bottom: 16px;">
+            We received a request to reset your password. Please use the following verification code:
+          </p>
+          <div style="background: #f7fafc; border: 1px dashed #e2e8f0; border-radius: 4px; padding: 16px; text-align: center; margin: 24px 0;">
+            <span style="font-size: 24px; letter-spacing: 2px; font-weight: 600; color: #2d3748;">${otp}</span>
+          </div>
+          <p style="font-size: 12px; line-height: 1.5; margin-bottom: 16px;">
+            This code will expire in <strong>10 minutes</strong>. For security reasons, please do not share this code with anyone.
+          </p>
+          <p style="font-size: 12px; line-height: 1.5; margin-bottom: 24px;">
+            If you didn't request this password reset, you can safely ignore this email.
+          </p>
+          <div style="border-top: 1px solid #e8e8e8; padding-top: 16px;">
+            <p style="font-size: 11px; color: #718096; margin-bottom: 8px;">
+              Need help? <a href="https://vocalheart.com/support" style="color: #4299e1; text-decoration: none;">Contact our support team</a>
+            </p>
+            <p style="font-size: 11px; color: #718096; margin: 0;">
+              © ${new Date().getFullYear()} VocalHeart Infotech. All rights reserved.
+            </p>
+          </div>
+        </div>
+      `,
+    };
+
+    let attempts = 0;
+    const maxAttempts = 2;
+    let emailSent = false;
+    let lastError = null;
+
+    while (attempts < maxAttempts && !emailSent) {
+      try {
+        await transporter.sendMail(mailOptions);
+        emailSent = true;
+      } catch (error) {
+        attempts++;
+        lastError = error;
+        console.warn(`Email sending attempt ${attempts} failed:`, error.message);
+        if (attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+    }
+
+    if (!emailSent) {
+      console.error('Failed to send OTP email after retries:', lastError.message);
+      return res.status(500).json({
+        error: 'Email error',
+        message: 'Failed to send verification code. Please try again later.',
       });
     }
 
     res.status(200).json({
-      message: 'OTP verified successfully',
-      data: { email: sanitizedEmail },
+      message: 'Verification code sent',
+      data: { details: 'A 6-digit verification code has been sent to your email.' },
     });
   } catch (error) {
-    console.error('OTP Verification Error:', error.message);
+    console.error('Resend OTP Error:', error.message);
     res.status(500).json({
       error: 'Server error',
-      message: 'Failed to verify OTP',
+      message: 'Failed to send verification code',
     });
   }
 });
 
-// Change Password (with OTP verification)
+// Change Password (with OTP verification, for authenticated users)
 router.post('/change-password', authenticateToken, async (req, res) => {
   const { currentPassword, newPassword, confirmPassword, otp } = req.body;
 
@@ -559,7 +692,7 @@ router.post('/change-password', authenticateToken, async (req, res) => {
   }
 });
 
-// Reset Password
+// Reset Password (for unauthenticated users)
 router.post('/reset-password', async (req, res) => {
   const { email, otp, password } = req.body;
 
@@ -579,24 +712,30 @@ router.post('/reset-password', async (req, res) => {
 
   try {
     const sanitizedEmail = validator.normalizeEmail(email.toLowerCase());
-    const [users] = await pool.query(
-      'SELECT id FROM users WHERE email = ? AND otp = ? AND otp_expires > ?',
+    const [tempResets] = await pool.query(
+      'SELECT * FROM temp_resets WHERE email = ? AND otp = ? AND otp_expires > ?',
       [sanitizedEmail, otp, new Date()]
     );
-    if (users.length === 0) {
+    if (tempResets.length === 0) {
       return res.status(400).json({
         error: 'Invalid OTP',
         message: 'The OTP is invalid or has expired',
       });
     }
 
+    const [users] = await pool.query('SELECT id FROM users WHERE email = ?', [sanitizedEmail]);
+    if (users.length === 0) {
+      return res.status(404).json({
+        error: 'User not found',
+        message: 'This email is not registered',
+      });
+    }
+
     const user = users[0];
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    await pool.query('UPDATE users SET password = ?, otp = NULL, otp_expires = NULL WHERE id = ?', [
-      hashedPassword,
-      user.id,
-    ]);
+    await pool.query('UPDATE users SET password = ? WHERE id = ?', [hashedPassword, user.id]);
+    await pool.query('DELETE FROM temp_resets WHERE email = ?', [sanitizedEmail]);
 
     res.status(200).json({
       message: 'Password reset successfully',
