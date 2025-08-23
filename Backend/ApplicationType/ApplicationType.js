@@ -14,7 +14,6 @@ router.get('/applicationtype', authenticateToken, async (req, res) => {
     const sql = `SELECT name, id, user_id FROM ApplicationType WHERE user_id = ?`;
     const user_id = req.user.id;
     const [result] = await database.query(sql, [user_id]);
-
     res.status(200).json({
       message: "Successfully fetched application types",
       result
@@ -24,6 +23,9 @@ router.get('/applicationtype', authenticateToken, async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
+
+
 
 // POST: Add new application type
 router.post(
@@ -58,6 +60,8 @@ router.post(
     }
   }
 );
+
+
 
 // DELETE: Remove an application type
 router.delete('/applicationtype/:id', authenticateToken, async (req, res) => {
@@ -97,11 +101,9 @@ router.put(
     try {
       const sql = `UPDATE ApplicationType SET name = ? WHERE id = ? AND user_id = ?`;
       const [result] = await database.query(sql, [name, id, user_id]);
-
       if (result.affectedRows === 0) {
         return res.status(404).json({ message: "No matching record found or unauthorized" });
       }
-
       res.status(200).json({ message: "Application type has been updated", result });
     } catch (error) {
       console.error('Update error:', error);

@@ -16,7 +16,7 @@ const ApplicationType = require('./ApplicationType/ApplicationType');
 const Profile = require('./Profile/Profile');
 const FormSubmission = require('./FormSubmit/FormSubmission');
 const CreateMember = require('./createmembers/createMembers');
-
+const status = require('./ApplicationStatus/Status');
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -52,6 +52,8 @@ app.use('/api', submissionRoutes);
 app.use('/api', FormSubmission);
 app.use('/api/attendance', attendance);
 app.use('/api/auth', authRoute);
+app.use('/api', status);
+
 
 // Health check
 app.get('/', (req, res) => {

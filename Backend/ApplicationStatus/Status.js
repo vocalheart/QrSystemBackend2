@@ -1,4 +1,3 @@
-
 const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
@@ -13,17 +12,17 @@ if (missingEnvVars.length > 0) {
   throw new Error('Backblaze B2 configuration is incomplete');
 }
 
-// POST /designation
+// POST /status
 router.post(
-  '/designation',
+  '/status',
   authenticateToken,
   [
     body('name')
       .trim()
       .notEmpty()
-      .withMessage('Designation name is required')
+      .withMessage('Status name is required')
       .isLength({ max: 100 })
-      .withMessage('Designation name must not exceed 100 characters'),
+      .withMessage('Status name must not exceed 100 characters'),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -34,62 +33,62 @@ router.post(
     const { name } = req.body;
 
     try {
-      // Check if designation name already exists for the user
-      const [existingDesignation] = await database.query(
-        'SELECT id FROM designation WHERE name = ? AND user_id = ?',
+      // Check if status name already exists for the user
+      const [existingStatus] = await database.query(
+        'SELECT id FROM status WHERE name = ? AND user_id = ?',
         [name, user_id]
       );
-      if (existingDesignation.length > 0) {
-        return res.status(400).json({ message: 'Designation name already exists' });
+      if (existingStatus.length > 0) {
+        return res.status(400).json({ message: 'Status name already exists' });
       }
 
-      const sql = `INSERT INTO designation (user_id, name, created_at) VALUES (?, ?, NOW())`;
+      const sql = `INSERT INTO status (user_id, name, created_at) VALUES (?, ?, NOW())`;
       const [result] = await database.query(sql, [user_id, name]);
 
-      const type = 'Designation';
-      const notiMessage = `New designation "${name}" added`;
+      const type = 'Status';
+      const notiMessage = `New status "${name}" added`;
       const insertNotification = `INSERT INTO Notification (user_id, type, message, status) VALUES (?, ?, ?, 'unread')`;
       await database.query(insertNotification, [user_id, type, notiMessage]);
 
       res.status(201).json({
         success: true,
-        message: 'Designation and notification added successfully',
-        result: result.insertId, // Adjusted to match Designation.jsx expectation
+        message: 'Status and notification added successfully',
+        statusId: result.insertId,
       });
     } catch (error) {
-      console.error('Error inserting designation:', error);
+      console.error('Error inserting status:', error);
       res.status(500).json({
         success: false,
-        error: 'Failed to insert designation',
+        error: 'Failed to insert status',
       });
     }
   }
 );
 
-// GET /designation
-router.get('/designation', authenticateToken, async (req, res) => {
+// GET /status
+router.get('/status', authenticateToken, async (req, res) => {
   const userId = req.user.id;
   try {
-    const sql = 'SELECT id, name, user_id, created_at FROM designation WHERE user_id = ?';
+    const sql = 'SELECT id, name, user_id, created_at FROM status WHERE user_id = ?';
     const [results] = await database.query(sql, [userId]);
-    res.status(200).json({ message: 'Successfully fetched', result: results }); // Adjusted to match Designation.jsx
+    res.status(200).json({ message: 'Successfully fetched', results });
   } catch (error) {
-    console.error('Error fetching designations:', error);
-    res.status(500).json({ error: 'Failed to get designation' });
+    console.error('Error fetching statuses:', error);
+    res.status(500).json({ error: 'Failed to get status' });
   }
 });
 
-// PUT /designation/:id
+// PUT /status/:id
 router.put(
-  '/designation/:id',
+  '/status/:id',
   authenticateToken,
   [
     body('name')
       .trim()
       .notEmpty()
-      .withMessage('Designation name is required')
+      .withMessage('Status name is required')
       .isLength({ max: 100 })
-      .withMessage('Designation name must not exceed 100 characters'),
+      .withMessage('Status name must not exceed 100 characters'),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -101,23 +100,23 @@ router.put(
     const { name } = req.body;
 
     try {
-      // Check if the new designation name already exists for the user (excluding the current designation)
-      const [existingDesignation] = await database.query(
-        'SELECT id FROM designation WHERE name = ? AND user_id = ? AND id != ?',
+      // Check if the new status name already exists for the user (excluding the current status)
+      const [existingStatus] = await database.query(
+        'SELECT id FROM status WHERE name = ? AND user_id = ? AND id != ?',
         [name, userId, id]
       );
-      if (existingDesignation.length > 0) {
-        return res.status(400).json({ message: 'Designation name already exists' });
+      if (existingStatus.length > 0) {
+        return res.status(400).json({ message: 'Status name already exists' });
       }
 
-      const sql = `UPDATE designation SET name = ?, created_at = NOW() WHERE id = ? AND user_id = ?`;
+      const sql = `UPDATE status SET name = ?, created_at = NOW() WHERE id = ? AND user_id = ?`;
       const [result] = await database.query(sql, [name, id, userId]);
       if (result.affectedRows === 0) {
-        return res.status(404).json({ message: 'Designation not found or unauthorized' });
+        return res.status(404).json({ message: 'Status not found or unauthorized' });
       }
 
-      const type = 'Designation';
-      const notiMessage = `Designation ID ${id} updated to "${name}"`;
+      const type = 'Status';
+      const notiMessage = `Status ID ${id} updated to "${name}"`;
       const insertNotification = `INSERT INTO Notification (user_id, type, message, status) VALUES (?, ?, ?, 'unread')`;
       await database.query(insertNotification, [userId, type, notiMessage]);
 
@@ -133,35 +132,34 @@ router.put(
   }
 );
 
-// DELETE /designation/:id
-router.delete('/designation/:id', authenticateToken, async (req, res) => {
+// DELETE /status/:id
+router.delete('/status/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
   const userId = req.user.id;
   try {
-    // Check if the designation is used in form_submissions
+    // Check if the status is used in form_submissions
     const [submissions] = await database.query(
-      'SELECT id FROM form_submissions WHERE designation = (SELECT name FROM designation WHERE id = ? AND user_id = ?)',
+      'SELECT id FROM form_submissions WHERE status = (SELECT name FROM status WHERE id = ? AND user_id = ?)',
       [id, userId]
     );
     if (submissions.length > 0) {
-      return res.status(400).json({ message: 'Cannot delete designation; it is used in form submissions' });
+      return res.status(400).json({ message: 'Cannot delete status; it is used in form submissions' });
     }
 
-    const sql = 'DELETE FROM designation WHERE id = ? AND user_id = ?';
+    const sql = 'DELETE FROM status WHERE id = ? AND user_id = ?';
     const [result] = await database.query(sql, [id, userId]);
     if (result.affectedRows === 0) {
-      return res.status(404).json({ message: 'Designation not found or unauthorized' });
+      return res.status(404).json({ message: 'Status not found or unauthorized' });
     }
-
-    const type = 'Designation';
-    const notiMessage = `Designation ID ${id} deleted`;
+    const type = 'Status';
+    const notiMessage = `Status ID ${id} deleted`;
     const insertNotification = `INSERT INTO Notification (user_id, type, message, status) VALUES (?, ?, ?, 'unread')`;
     await database.query(insertNotification, [userId, type, notiMessage]);
 
-    res.status(200).json({ message: 'Designation deleted successfully' });
+    res.status(200).json({ message: 'Status deleted successfully' });
   } catch (error) {
-    console.error('Error deleting designation:', error);
-    res.status(500).json({ message: 'Error deleting designation' });
+    console.error('Error deleting status:', error);
+    res.status(500).json({ message: 'Error deleting status' });
   }
 });
 

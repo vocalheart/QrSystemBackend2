@@ -4,13 +4,14 @@ const multer = require('multer');
 const { S3Client, PutObjectCommand, GetObjectCommand, HeadObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const path = require('path');
+const { body, validationResult } = require('express-validator');
 require('dotenv').config({ path: 'E:\\JobPortal\\VocalHeartVisit\\Backend\\.env' });
 const database = require('../database/mysql');
-const authenticationToken = require('../middleware/AuthenticationToken');
-const transporter = require('../database/Nodemailer'); // Import nodemailer transporter
+const authenticateToken = require('../middleware/AuthenticationToken');
+const transporter = require('../database/Nodemailer');
 
 // Validate environment variables
-const requiredEnvVars = ['B2_ENDPOINT', 'B2_KEY_ID', 'B2_KEY', 'B2_BUCKET_NAME'];
+const requiredEnvVars = ['B2_ENDPOINT', 'B2_KEY_ID', 'B2_KEY', 'B2_BUCKET_NAME', 'DASHBOARD_URL'];
 const missingEnvVars = requiredEnvVars.filter((varName) => !process.env[varName]);
 if (missingEnvVars.length > 0) {
   console.error('Missing Backblaze B2 environment variables:', missingEnvVars);
@@ -43,14 +44,14 @@ const s3Client = new S3Client({
   },
 });
 
-// Route: Submit form with file upload
+// POST /form/:code/submit
 router.post('/form/:code/submit', upload.single('resume'), async (req, res) => {
   const { code } = req.params;
-  const { name, email, reason, application_type, designation, department_name } = req.body;
+  const { name, email, reason, application_type } = req.body;
   const resume = req.file;
 
-  if (!name || !email || !application_type || !designation) {
-    return res.status(400).json({ message: 'Name, email, application type, and designation are required' });
+  if (!name || !email || !application_type) {
+    return res.status(400).json({ message: 'Name, email, and application type are required' });
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return res.status(400).json({ message: 'Invalid email format' });
@@ -71,27 +72,6 @@ router.post('/form/:code/submit', upload.single('resume'), async (req, res) => {
       return res.status(400).json({ message: 'Invalid application type' });
     }
 
-    const [desig] = await database.query(
-      'SELECT id, name FROM designation WHERE name = ? AND user_id = ?',
-      [designation, user_id]
-    );
-    if (!desig.length) {
-      return res.status(400).json({ message: 'Invalid designation' });
-    }
-
-    let departmentNameToStore = null;
-    if (department_name) {
-      const [dept] = await database.query(
-        'SELECT name FROM department WHERE name = ? AND user_id = ?',
-        [department_name, user_id]
-      );
-      if (!dept.length) {
-        return res.status(400).json({ message: 'Invalid department name' });
-      }
-      departmentNameToStore = dept[0].name;
-    }
-
-    // Upload resume to Backblaze B2
     let resumeUrl = null;
     if (resume) {
       const fileName = `${Date.now()}_${resume.originalname.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
@@ -105,10 +85,9 @@ router.post('/form/:code/submit', upload.single('resume'), async (req, res) => {
       try {
         const command = new PutObjectCommand(uploadParams);
         await s3Client.send(command);
-        resumeUrl = fileName; // Store just the file key
+        resumeUrl = fileName;
         console.log('Resume uploaded successfully:', fileName);
 
-        // Verify file existence
         const headCommand = new HeadObjectCommand({
           Bucket: process.env.B2_BUCKET_NAME,
           Key: fileName,
@@ -120,42 +99,34 @@ router.post('/form/:code/submit', upload.single('resume'), async (req, res) => {
       }
     }
 
-    // Insert form data with resume file key
+    const [defaultStatus] = await database.query(
+      'SELECT name FROM status WHERE name = ? AND user_id = ?',
+      ['pending', user_id]
+    );
+    if (!defaultStatus.length) {
+      return res.status(500).json({ message: 'Default status "pending" not found for user' });
+    }
+
     const [result] = await database.query(
       `INSERT INTO form_submissions 
-      (qr_code_id, user_id, name, email, reason, application_type, designation, department_name, resume, created_at, status, reviewed) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?)`,
-      [
-        qr_code_id,
-        user_id,
-        name,
-        email,
-        reason || null,
-        appType[0].name,
-        designation,
-        departmentNameToStore,
-        resumeUrl,
-        'pending',
-        0,
-      ]
+      (qr_code_id, user_id, name, email, reason, application_type, resume, created_at, status, reviewed, designation, department_name) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, NULL, NULL)`,
+      [qr_code_id, user_id, name, email, reason || null, appType[0].name, resumeUrl, defaultStatus[0].name, 0]
     );
 
-    // Insert notification
-    const notiMessage = `New ${appType[0].name} submission from "${name}" for ${designation}.`;
+    const notiMessage = `New ${appType[0].name} submission from "${name}".`;
     await database.query(
       `INSERT INTO Notification (user_id, type, message, status) VALUES (?, ?, ?, 'unread')`,
       [user_id, 'Form Submission', notiMessage]
     );
 
-    // Fetch user email for notification
-   // Fetch user email for notification
     const [user] = await database.query('SELECT email FROM users WHERE id = ?', [user_id]);
     if (user.length && user[0].email) {
       const mailOptions = {
         from: '"VocalHeart Tech" <vocalheart.tech@gmail.com>',
         to: user[0].email,
         subject: 'New Form Submission Received',
-        text: `You have received a new ${appType[0].name} submission from "${name}" for ${designation}. Please review it in your dashboard.`,
+        text: `You have received a new ${appType[0].name} submission from "${name}". Please review it in your dashboard.`,
         html: `
           <!DOCTYPE html>
           <html lang="en">
@@ -174,7 +145,7 @@ router.post('/form/:code/submit', upload.single('resume'), async (req, res) => {
               <tr>
                 <td style="padding: 24px;">
                   <p style="margin: 0 0 16px; font-size: 14px; color: #1F2937;">
-                    You have received a new <strong>${appType[0].name}</strong> submission from <strong>${name}</strong> for <strong>${designation}</strong>.
+                    You have received a new <strong>${appType[0].name}</strong> submission from <strong>${name}</strong>.
                   </p>
                   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 16px;">
                     <tr>
@@ -185,15 +156,6 @@ router.post('/form/:code/submit', upload.single('resume'), async (req, res) => {
                       <td style="padding: 8px 0; font-size: 14px; color: #6B7280;"><strong>Email:</strong></td>
                       <td style="padding: 8px 0; font-size: 14px; color: #1F2937;">${email}</td>
                     </tr>
-                    <tr>
-                      <td style="padding: 8px 0; font-size: 14px; color: #6B7280;"><strong>Designation:</strong></td>
-                      <td style="padding: 8px 0; font-size: 14px; color: #1F2937;">${designation}</td>
-                    </tr>
-                    ${departmentNameToStore ? `
-                    <tr>
-                      <td style="padding: 8px 0; font-size: 14px; color: #6B7280;"><strong>Department:</strong></td>
-                      <td style="padding: 8px 0; font-size: 14px; color: #1F2937;">${departmentNameToStore}</td>
-                    </tr>` : ''}
                     ${reason ? `
                     <tr>
                       <td style="padding: 8px 0; font-size: 14px; color: #6B7280;"><strong>Reason:</strong></td>
@@ -234,7 +196,6 @@ router.post('/form/:code/submit', upload.single('resume'), async (req, res) => {
         console.log('Email notification sent to:', user[0].email);
       } catch (emailError) {
         console.error('Email sending error:', emailError);
-        // Not failing the request, just logging the error
       }
     } else {
       console.warn('No user email found for user_id:', user_id);
@@ -251,11 +212,11 @@ router.post('/form/:code/submit', upload.single('resume'), async (req, res) => {
         email,
         reason,
         application_type: appType[0].name,
-        designation,
-        department_name: departmentNameToStore,
         resume: resumeUrl,
-        status: 'pending',
+        status: defaultStatus[0].name,
         created_at: new Date(),
+        designation: null,
+        department_name: null,
       },
     });
   } catch (error) {
@@ -264,14 +225,13 @@ router.post('/form/:code/submit', upload.single('resume'), async (req, res) => {
   }
 });
 
-// Route: Fetch resume signed URL (protected)
-router.get('/form/resume/:id', authenticationToken, async (req, res) => {
+// GET /form/resume/:id
+router.get('/form/resume/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
   try {
     let submissionQuery;
     let queryParams;
     if (req.user.role === 'member') {
-      // For members, fetch submission where user_id matches their created_by
       const [user] = await database.query('SELECT created_by FROM users WHERE id = ?', [req.user.id]);
       if (!user.length || !user[0].created_by) {
         return res.status(403).json({ message: 'No associated admin found for this member' });
@@ -279,24 +239,19 @@ router.get('/form/resume/:id', authenticationToken, async (req, res) => {
       submissionQuery = 'SELECT resume, user_id FROM form_submissions WHERE id = ? AND user_id = ?';
       queryParams = [id, user[0].created_by];
     } else {
-      // For admins, fetch submission where user_id matches their own id
       submissionQuery = 'SELECT resume, user_id FROM form_submissions WHERE id = ? AND user_id = ?';
       queryParams = [id, req.user.id];
     }
-
     const [submission] = await database.query(submissionQuery, queryParams);
-
     if (!submission.length) {
       return res.status(404).json({ message: 'Submission not found or not authorized' });
     }
-
     const { resume: fileKey } = submission[0];
 
     if (!fileKey) {
       return res.status(404).json({ message: 'No resume uploaded for this submission' });
     }
 
-    // Verify file existence in Backblaze B2
     try {
       const headCommand = new HeadObjectCommand({
         Bucket: process.env.B2_BUCKET_NAME,
@@ -308,27 +263,25 @@ router.get('/form/resume/:id', authenticationToken, async (req, res) => {
       return res.status(404).json({ message: 'Resume file not found in storage' });
     }
 
-    // Determine content type and disposition
     const extension = fileKey.split('.').pop().toLowerCase();
     let contentType = 'application/octet-stream';
-    let dispositionType = 'attachment'; 
+    let dispositionType = 'attachment';
     if (extension === 'pdf') {
       contentType = 'application/pdf';
-      dispositionType = 'inline'; 
+      dispositionType = 'inline';
     } else if (extension === 'doc') {
       contentType = 'application/msword';
     } else if (extension === 'docx') {
       contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
     }
 
-    // Generate signed URL
     const command = new GetObjectCommand({
       Bucket: process.env.B2_BUCKET_NAME,
       Key: fileKey,
     });
 
     const signedUrl = await getSignedUrl(s3Client, command, {
-      expiresIn: 3600, // 1 hour expiry
+      expiresIn: 3600,
       responseContentType: contentType,
       responseContentDisposition: `${dispositionType}; filename="${fileKey}"`,
     });
@@ -347,14 +300,13 @@ router.get('/form/resume/:id', authenticationToken, async (req, res) => {
   }
 });
 
-// GET all form submissions
-router.get('/formDetails', authenticationToken, async (req, res) => {
+// GET /formDetails
+router.get('/formDetails', authenticateToken, async (req, res) => {
   try {
     let submissionQuery;
     let queryParams;
 
     if (req.user.role === 'member') {
-      // For members, fetch submissions where user_id matches their created_by
       const [user] = await database.query('SELECT created_by FROM users WHERE id = ?', [req.user.id]);
       if (!user.length || !user[0].created_by) {
         return res.status(403).json({ message: 'No associated admin found for this member' });
@@ -367,18 +319,18 @@ router.get('/formDetails', authenticationToken, async (req, res) => {
       `;
       queryParams = [user[0].created_by];
     } else {
-      // For admins, fetch submissions where user_id matches their own id
-      submissionQuery = `SELECT id, user_id, name, email, created_at, resume, reason, 
-        application_type, status, reviewed, designation, department_name
+      submissionQuery = `
+        SELECT id, user_id, name, email, created_at, resume, reason, 
+               application_type, status, reviewed, designation, department_name
         FROM form_submissions
-        WHERE user_id = ?`;
+        WHERE user_id = ?
+      `;
       queryParams = [req.user.id];
     }
 
     const [submissions] = await database.query(submissionQuery, queryParams);
 
-    // Map submissions to ensure consistent response format
-    const formattedSubmissions = submissions.map(submission => ({
+    const formattedSubmissions = submissions.map((submission) => ({
       ...submission,
       application_type_name: submission.application_type,
     }));
@@ -389,20 +341,19 @@ router.get('/formDetails', authenticationToken, async (req, res) => {
   }
 });
 
-// PATCH update submission status
-router.patch('/formDetails/:id/status', authenticationToken, async (req, res) => {
+// PATCH /formDetails/:id/status
+router.patch('/formDetails/:id/status', authenticateToken, async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
-  const validStatuses = ['pending', 'reviewed', 'shortlisted', 'rejected', 'approved', 'on_hold'];
 
-  if (!status || !validStatuses.includes(status)) {
-    return res.status(400).json({ message: 'Invalid status provided' });
+  if (!status) {
+    return res.status(400).json({ message: 'Status is required' });
   }
+
   try {
     let submissionQuery;
     let queryParams;
     if (req.user.role === 'member') {
-      // For members, ensure submission's user_id matches their created_by
       const [user] = await database.query('SELECT created_by FROM users WHERE id = ?', [req.user.id]);
       if (!user.length || !user[0].created_by) {
         return res.status(403).json({ message: 'No associated admin found for this member' });
@@ -410,7 +361,6 @@ router.patch('/formDetails/:id/status', authenticationToken, async (req, res) =>
       submissionQuery = 'SELECT id, user_id FROM form_submissions WHERE id = ? AND user_id = ?';
       queryParams = [id, user[0].created_by];
     } else {
-      // For admins, ensure submission's user_id matches their own id
       submissionQuery = 'SELECT id, user_id FROM form_submissions WHERE id = ? AND user_id = ?';
       queryParams = [id, req.user.id];
     }
@@ -418,19 +368,35 @@ router.patch('/formDetails/:id/status', authenticationToken, async (req, res) =>
     if (submissions.length === 0) {
       return res.status(404).json({ message: 'Submission not found or not authorized' });
     }
+
+    const [validStatus] = await database.query(
+      'SELECT name FROM status WHERE name = ? AND user_id = ?',
+      [status, submissions[0].user_id]
+    );
+    if (!validStatus.length) {
+      return res.status(400).json({ message: 'Invalid status provided' });
+    }
+
     await database.query(
       `UPDATE form_submissions SET status = ?, updated_at = NOW() WHERE id = ?`,
-      [status, id]
+      [validStatus[0].name, id]
     );
-    res.status(200).json({ message: `Status updated to ${status}` });
+
+    const notiMessage = `Submission ID ${id} status updated to "${validStatus[0].name}"`;
+    await database.query(
+      `INSERT INTO Notification (user_id, type, message, status) VALUES (?, ?, ?, 'unread')`,
+      [submissions[0].user_id, 'Status Update', notiMessage]
+    );
+
+    res.status(200).json({ message: `Status updated to ${validStatus[0].name}` });
   } catch (error) {
     console.error('Error updating submission status:', error);
     res.status(500).json({ message: 'Failed to update status' });
   }
 });
 
-// PATCH update submission review status
-router.patch('/formDetails/:id/review', authenticationToken, async (req, res) => {
+// PATCH /formDetails/:id/review
+router.patch('/formDetails/:id/review', authenticateToken, async (req, res) => {
   const { id } = req.params;
   const { reviewed } = req.body;
 
@@ -443,7 +409,6 @@ router.patch('/formDetails/:id/review', authenticationToken, async (req, res) =>
     let queryParams;
 
     if (req.user.role === 'member') {
-      // For members, ensure submission's user_id matches their created_by
       const [user] = await database.query('SELECT created_by FROM users WHERE id = ?', [req.user.id]);
       if (!user.length || !user[0].created_by) {
         return res.status(403).json({ message: 'No associated admin found for this member' });
@@ -451,7 +416,6 @@ router.patch('/formDetails/:id/review', authenticationToken, async (req, res) =>
       submissionQuery = 'SELECT id, user_id FROM form_submissions WHERE id = ? AND user_id = ?';
       queryParams = [id, user[0].created_by];
     } else {
-      // For admins, ensure submission's user_id matches their own id
       submissionQuery = 'SELECT id, user_id FROM form_submissions WHERE id = ? AND user_id = ?';
       queryParams = [id, req.user.id];
     }
@@ -469,6 +433,125 @@ router.patch('/formDetails/:id/review', authenticationToken, async (req, res) =>
   } catch (error) {
     console.error('Error updating submission review status:', error);
     res.status(500).json({ message: 'Failed to update review status' });
+  }
+});
+
+// PATCH /formDetails/:id/update
+router.patch(
+  '/formDetails/:id/update',
+  authenticateToken,
+  [
+    body('designation')
+      .optional({ nullable: true })
+      .trim()
+      .isLength({ max: 100 })
+      .withMessage('Designation must not exceed 100 characters'),
+    body('department_name')
+      .optional({ nullable: true })
+      .trim()
+      .isLength({ max: 100 })
+      .withMessage('Department name must not exceed 100 characters'),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+    const { id } = req.params;
+    const { designation, department_name } = req.body;
+
+    try {
+      let submissionQuery;
+      let queryParams;
+      if (req.user.role === 'member') {
+        const [user] = await database.query('SELECT created_by FROM users WHERE id = ?', [req.user.id]);
+        if (!user.length || !user[0].created_by) {
+          return res.status(403).json({ message: 'No associated admin found for this member' });
+        }
+        submissionQuery = 'SELECT user_id FROM form_submissions WHERE id = ? AND user_id = ?';
+        queryParams = [id, user[0].created_by];
+      } else {
+        submissionQuery = 'SELECT user_id FROM form_submissions WHERE id = ? AND user_id = ?';
+        queryParams = [id, req.user.id];
+      }
+      const [submission] = await database.query(submissionQuery, queryParams);
+      if (!submission.length) {
+        return res.status(404).json({ message: 'Submission not found or not authorized' });
+      }
+
+      let designationToStore = null;
+      if (designation) {
+        const [desig] = await database.query(
+          'SELECT id, name FROM designation WHERE name = ? AND user_id = ?',
+          [designation, submission[0].user_id]
+        );
+        if (!desig.length) {
+          return res.status(400).json({ message: 'Invalid designation' });
+        }
+        designationToStore = desig[0].name;
+      }
+
+      let departmentNameToStore = null;
+      if (department_name) {
+        const [dept] = await database.query(
+          'SELECT id, name FROM department WHERE name = ? AND user_id = ?',
+          [department_name, submission[0].user_id]
+        );
+        if (!dept.length) {
+          return res.status(400).json({ message: 'Invalid department name' });
+        }
+        departmentNameToStore = dept[0].name;
+      }
+
+      await database.query(
+        'UPDATE form_submissions SET designation = ?, department_name = ?, updated_at = NOW() WHERE id = ?',
+        [designationToStore, departmentNameToStore, id]
+      );
+
+      const notiMessage = `Submission ID ${id} updated with designation "${designationToStore || 'None'}" and department "${departmentNameToStore || 'None'}".`;
+      await database.query(
+        `INSERT INTO Notification (user_id, type, message, status) VALUES (?, ?, ?, 'unread')`,
+        [submission[0].user_id, 'Submission Update', notiMessage]
+      );
+
+      res.status(200).json({ message: 'Submission updated successfully' });
+    } catch (error) {
+      console.error('Update submission error:', error);
+      res.status(500).json({ message: 'Failed to update submission', error: error.message });
+    }
+  }
+);
+
+// GET /qrcodes/data
+router.get('/qrcodes/data', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const [applicationTypes] = await database.query(
+      'SELECT id, name FROM ApplicationType WHERE user_id = ?',
+      [userId]
+    );
+    const [designations] = await database.query(
+      'SELECT id, name FROM designation WHERE user_id = ?',
+      [userId]
+    );
+    const [departments] = await database.query(
+      'SELECT id, name FROM department WHERE user_id = ?',
+      [userId]
+    );
+    const [statuses] = await database.query(
+      'SELECT id, name FROM status WHERE user_id = ?',
+      [userId]
+    );
+
+    res.status(200).json({
+      applicationTypes,
+      designations,
+      departments,
+      statuses,
+    });
+  } catch (error) {
+    console.error('Error fetching QR code data:', error);
+    res.status(500).json({ message: 'Failed to fetch QR code data' });
   }
 });
 
