@@ -7,7 +7,6 @@ const allowedOrigins = require('./cors/corsOrigins');
 const authRoute = require('./authRoutes/auth');
 const Notification = require('./Notification.js/Notification');
 const qrCode = require('./Qr Routes/qr');
-const attendance = require('./attendance.js/attendance');
 const department = require('./Department/Department');
 const designation = require('./Designation/Designation');
 const LocationCoordinates = require('./LocationCoordinates/locationRoutes');
@@ -50,7 +49,6 @@ app.use('/api', department);
 app.use('/api', qrCode);
 app.use('/api', submissionRoutes);
 app.use('/api', FormSubmission);
-app.use('/api/attendance', attendance);
 app.use('/api/auth', authRoute);
 app.use('/api', status);
 
@@ -70,9 +68,6 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-
-app.listen(port, '0.0.0.0', () => {
-  console.log(`Server is running at http://0.0.0.0:${port}`);
+app.listen(port, () => {
+  console.log(`Server is running at http://localhost:${port}`);
 });
-
-

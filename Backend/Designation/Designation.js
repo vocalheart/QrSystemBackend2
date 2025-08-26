@@ -1,11 +1,14 @@
-
 const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const database = require('../database/mysql');
 const authenticateToken = require('../middleware/AuthenticationToken');
 
-// Validate environment variables
+// -----------------------------------------------------------------------------------------
+// Validate required Backblaze B2 environment variables
+// Ensures all necessary environment variables are set before processing requests.
+// -----------------------------------------------------------------------------------------
+
 const requiredEnvVars = ['B2_ENDPOINT', 'B2_KEY_ID', 'B2_KEY', 'B2_BUCKET_NAME', 'DASHBOARD_URL'];
 const missingEnvVars = requiredEnvVars.filter((varName) => !process.env[varName]);
 if (missingEnvVars.length > 0) {
@@ -13,7 +16,13 @@ if (missingEnvVars.length > 0) {
   throw new Error('Backblaze B2 configuration is incomplete');
 }
 
+// -----------------------------------------------------------------------------------------
 // POST /designation
+// Creates a new designation for the authenticated user.
+// Used in the frontend (designation.jsx) to add a designation.
+// Validates the designation name, checks for duplicates, and inserts a notification.
+// -----------------------------------------------------------------------------------------
+
 router.post(
   '/designation',
   authenticateToken,
@@ -54,7 +63,7 @@ router.post(
       res.status(201).json({
         success: true,
         message: 'Designation and notification added successfully',
-        result: result.insertId, // Adjusted to match Designation.jsx expectation
+        result: result.insertId, // Matches designation.jsx expectation
       });
     } catch (error) {
       console.error('Error inserting designation:', error);
@@ -66,20 +75,31 @@ router.post(
   }
 );
 
+// -----------------------------------------------------------------------------------------
 // GET /designation
+// Retrieves all designations created by the authenticated user.
+// Used in the frontend (designation.jsx) to display designation data.
+// -----------------------------------------------------------------------------------------
+
 router.get('/designation', authenticateToken, async (req, res) => {
   const userId = req.user.id;
   try {
     const sql = 'SELECT id, name, user_id, created_at FROM designation WHERE user_id = ?';
     const [results] = await database.query(sql, [userId]);
-    res.status(200).json({ message: 'Successfully fetched', result: results }); // Adjusted to match Designation.jsx
+    res.status(200).json({ message: 'Successfully fetched', result: results }); // Matches designation.jsx expectation
   } catch (error) {
     console.error('Error fetching designations:', error);
     res.status(500).json({ error: 'Failed to get designation' });
   }
 });
 
+// -----------------------------------------------------------------------------------------
 // PUT /designation/:id
+// Updates the name of an existing designation for the authenticated user.
+// Used in the frontend (designation.jsx) to modify designation details.
+// Validates the new name, checks for duplicates, and inserts a notification.
+// -----------------------------------------------------------------------------------------
+
 router.put(
   '/designation/:id',
   authenticateToken,
@@ -133,7 +153,14 @@ router.put(
   }
 );
 
+// -----------------------------------------------------------------------------------------
 // DELETE /designation/:id
+// Deletes a designation by ID for the authenticated user.
+// Used in the frontend (designation.jsx) to remove a designation.
+// Ensures the designation is not used in form submissions and belongs to the user.
+// Inserts a notification upon deletion.
+// -----------------------------------------------------------------------------------------
+
 router.delete('/designation/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
   const userId = req.user.id;

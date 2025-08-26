@@ -376,6 +376,6 @@ router.get('/qrcodes/user', authenticationToken, async (req, res) => {
     console.error('QR code fetch error:', error);
     res.status(500).json({ message: 'Internal Server Error', error: error.message });
   }
-});
+});  
 
 module.exports = router;

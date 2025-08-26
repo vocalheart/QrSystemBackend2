@@ -4,7 +4,7 @@ const { body, validationResult } = require('express-validator');
 const database = require('../database/mysql');
 const authenticateToken = require('../middleware/AuthenticationToken');
 
-// Validate environment variables
+// Validate required Backblaze B2 environment variables
 const requiredEnvVars = ['B2_ENDPOINT', 'B2_KEY_ID', 'B2_KEY', 'B2_BUCKET_NAME', 'DASHBOARD_URL'];
 const missingEnvVars = requiredEnvVars.filter((varName) => !process.env[varName]);
 if (missingEnvVars.length > 0) {
@@ -12,7 +12,13 @@ if (missingEnvVars.length > 0) {
   throw new Error('Backblaze B2 configuration is incomplete');
 }
 
+// -----------------------------------------------------------------------------------------
 // POST /status
+// Creates a new status for visitor submission data, used in the frontend (status.jsx).
+// Requires authentication and validates the status name.
+// Inserts a notification for the created status.
+// -----------------------------------------------------------------------------------------
+
 router.post(
   '/status',
   authenticateToken,
@@ -33,7 +39,7 @@ router.post(
     const { name } = req.body;
 
     try {
-      // Check if status name already exists for the user
+      // Check if the status name already exists for the user
       const [existingStatus] = await database.query(
         'SELECT id FROM status WHERE name = ? AND user_id = ?',
         [name, user_id]
@@ -65,7 +71,12 @@ router.post(
   }
 );
 
+// -----------------------------------------------------------------------------------------
 // GET /status
+// Retrieves all statuses created by the authenticated user for visitor submission data.
+// Used in the frontend (status.jsx).
+// -----------------------------------------------------------------------------------------
+
 router.get('/status', authenticateToken, async (req, res) => {
   const userId = req.user.id;
   try {
@@ -78,11 +89,14 @@ router.get('/status', authenticateToken, async (req, res) => {
   }
 });
 
+// -----------------------------------------------------------------------------------------
 // PUT /status/:id
-router.put(
-  '/status/:id',
-  authenticateToken,
-  [
+// Updates an existing status for visitor submission data, used in the frontend (status.jsx).
+// Requires authentication, validates the status name, and ensures the new name is unique.
+// Inserts a notification for the updated status.
+// -----------------------------------------------------------------------------------------
+
+router.put('/status/:id',authenticateToken,[
     body('name')
       .trim()
       .notEmpty()
@@ -132,7 +146,13 @@ router.put(
   }
 );
 
+// -----------------------------------------------------------------------------------------
 // DELETE /status/:id
+// Deletes a status created by the authenticated user, used in the frontend (status.jsx).
+// Ensures the status is not used in form submissions before deletion.
+// Inserts a notification for the deleted status.
+// -----------------------------------------------------------------------------------------
+
 router.delete('/status/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
   const userId = req.user.id;

@@ -1,11 +1,15 @@
-
 const express = require('express');
 const router = express.Router();
 const { body, param, query, validationResult } = require('express-validator');
 const authenticateToken = require('../middleware/AuthenticationToken');
 const database = require('../database/mysql');
 
-// Utility to get correct user_id for members/admins
+// -----------------------------------------------------------------------------------------
+// Utility function to determine the correct user ID for queries.
+// Returns the admin ID for members or the authenticated user's ID for admins.
+// Responds with an error if the user ID is invalid or no admin is associated with a member.
+// -----------------------------------------------------------------------------------------
+
 const getUserIdToUse = async (req, res) => {
   try {
     if (!req.user?.id) {
@@ -28,7 +32,13 @@ const getUserIdToUse = async (req, res) => {
   }
 };
 
-// 1. Notification Counter (Unread Only)
+// -----------------------------------------------------------------------------------------
+// GET /notification-counter
+// Retrieves the count of unread notifications for the authenticated user.
+// Used in the frontend (e.g., notification.jsx) to display the unread notification count.
+// Supports both admin and member roles, using the admin ID for members.
+// -----------------------------------------------------------------------------------------
+
 router.get('/notification-counter', authenticateToken, async (req, res) => {
   try {
     const user_id = await getUserIdToUse(req, res);
@@ -51,7 +61,15 @@ router.get('/notification-counter', authenticateToken, async (req, res) => {
   }
 });
 
-// 2. Get All Notifications with Pagination
+// -----------------------------------------------------------------------------------------
+// GET /getNotifications
+// Retrieves a paginated list of notifications for the authenticated user.
+// Used in the frontend (e.g., notification.jsx) to display notification data.
+// Supports pagination with validated page and limit query parameters.
+// Formats created_at timestamps to ISO 8601 for consistency.
+// Supports both admin and member roles, using the admin ID for members.
+// -----------------------------------------------------------------------------------------
+
 router.get(
   '/getNotifications',
   authenticateToken,
@@ -112,7 +130,14 @@ router.get(
   }
 );
 
-// 3. Update Status of Single Notification
+// -----------------------------------------------------------------------------------------
+// POST /notification/status/:id
+// Updates the status (read/unread) of a specific notification for the authenticated user.
+// Used in the frontend (e.g., notification.jsx) to mark a notification as read or unread.
+// Validates the notification ID and status, ensuring the notification belongs to the user.
+// Supports both admin and member roles, using the admin ID for members.
+// -----------------------------------------------------------------------------------------
+
 router.post(
   '/notification/status/:id',
   authenticateToken,
@@ -166,7 +191,13 @@ router.post(
   }
 );
 
-// 4. Mark All Notifications as Read
+// -----------------------------------------------------------------------------------------
+// PUT /notification-mark-read
+// Marks all unread notifications as read for the authenticated user.
+// Used in the frontend (e.g., notification.jsx) to bulk-update notification status.
+// Supports both admin and member roles, using the admin ID for members.
+// -----------------------------------------------------------------------------------------
+
 router.put('/notification-mark-read', authenticateToken, async (req, res) => {
   try {
     const user_id = await getUserIdToUse(req, res);

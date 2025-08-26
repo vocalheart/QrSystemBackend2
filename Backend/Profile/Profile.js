@@ -4,7 +4,13 @@ const database = require('../database/mysql');
 const authenticateToken = require('../middleware/AuthenticationToken');
 const bcrypt = require('bcrypt');
 
-// GET user profile endpoint
+// -----------------------------------------------------------------------------------------
+// GET /user
+// Retrieves the profile data of the authenticated user.
+// Used in the frontend (p-rofile.jsx) to display user profile information.
+// Ensures the user exists and parses IP addresses if stored as a JSON string.
+// -----------------------------------------------------------------------------------------
+
 router.get('/user', authenticateToken, async (req, res) => {
   try {
     // Query to fetch all users using the database connection
@@ -32,7 +38,13 @@ router.get('/user', authenticateToken, async (req, res) => {
   }
 });
 
-// PUT user profile update endpoint
+// -----------------------------------------------------------------------------------------
+// PUT /user/:id
+// Updates the profile data (name and email) of the authenticated user.
+// Used in the frontend (p-rofile.jsx) to modify user profile information.
+// Validates inputs and ensures the user is authorized to update their own profile.
+// -----------------------------------------------------------------------------------------
+
 router.put('/user/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
   const { name, email } = req.body;
@@ -66,7 +78,13 @@ router.put('/user/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// POST change password endpoint
+// -----------------------------------------------------------------------------------------
+// POST /auth/change-password
+// Changes the password of the authenticated user.
+// Used in the frontend (p-rofile.jsx) to update the user's password.
+// Validates input, verifies the current password, and hashes the new password.
+// -----------------------------------------------------------------------------------------
+
 router.post('/auth/change-password', authenticateToken, async (req, res) => {
   const { currentPassword, newPassword, confirmPassword } = req.body;
   // Validate input

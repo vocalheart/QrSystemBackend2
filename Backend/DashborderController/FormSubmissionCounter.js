@@ -5,10 +5,18 @@ const database = require('../database/mysql');
 const NodeCache = require('node-cache');
 const { query, validationResult, body } = require('express-validator');
 
-// Initialize cache with 5-minute TTL
+// -----------------------------------------------------------------------------------------
+// Initialize NodeCache with a 5-minute TTL (Time To Live) for caching responses.
+// Checks cache every 60 seconds for expired entries.
+// -----------------------------------------------------------------------------------------
+
 const cache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
 
-// Input validation middleware for list endpoint
+// -----------------------------------------------------------------------------------------
+// Input validation middleware for GET /submission/list endpoint.
+// Ensures query parameters are valid for filtering, sorting, and pagination.
+// -----------------------------------------------------------------------------------------
+
 const validateQuery = [
   query('status')
     .optional()
@@ -49,7 +57,11 @@ const validateQuery = [
     .withMessage('Invalid end date'),
 ];
 
-// Input validation for status update
+// -----------------------------------------------------------------------------------------
+// Input validation middleware for POST /submission/status endpoint.
+// Ensures submission ID and status are valid.
+// -----------------------------------------------------------------------------------------
+
 const validateStatusUpdate = [
   body('submissionId')
     .isInt({ min: 1 })
@@ -59,7 +71,11 @@ const validateStatusUpdate = [
     .withMessage('Invalid status'),
 ];
 
-// Input validation for contact
+// -----------------------------------------------------------------------------------------
+// Input validation middleware for POST /contact endpoint.
+// Ensures message, type, and email (for support type) are valid.
+// -----------------------------------------------------------------------------------------
+
 const validateContact = [
   body('message')
     .notEmpty()
@@ -73,7 +89,11 @@ const validateContact = [
     .withMessage('Valid email required for support'),
 ];
 
-// Validation error handler
+// -----------------------------------------------------------------------------------------
+// Middleware to handle validation errors.
+// Returns a 400 response with error details if validation fails.
+// -----------------------------------------------------------------------------------------
+
 const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -82,7 +102,11 @@ const handleValidationErrors = (req, res, next) => {
   next();
 };
 
-// Helper function to get admin ID
+// -----------------------------------------------------------------------------------------
+// Helper function to retrieve the admin ID for a member user.
+// Throws an error if no admin is associated with the member.
+// -----------------------------------------------------------------------------------------
+
 async function getAdminId(userId) {
   try {
     const [user] = await database.query('SELECT created_by FROM users WHERE id = ?', [userId]);
@@ -95,7 +119,14 @@ async function getAdminId(userId) {
   }
 }
 
-// GET: /submission/counter
+// -----------------------------------------------------------------------------------------
+// GET /submission/counter
+// Retrieves the total count of form submissions and the date of the last submission.
+// Used in the frontend to display submission statistics for the authenticated user.
+// Supports both admin and member roles, using the admin ID for members.
+// Caches the response for 5 minutes to improve performance.
+// -----------------------------------------------------------------------------------------
+
 router.get('/submission/counter', authenticateToken, async (req, res) => {
   try {
     const cacheKey = `counter_${req.user.id}`;
@@ -124,7 +155,14 @@ router.get('/submission/counter', authenticateToken, async (req, res) => {
   }
 });
 
-// GET: /submission/today
+// -----------------------------------------------------------------------------------------
+// GET /submission/today
+// Retrieves the count of form submissions made today for the authenticated user.
+// Used in the frontend to display daily submission statistics.
+// Supports both admin and member roles, using the admin ID for members.
+// Caches the response for 5 minutes to improve performance.
+// -----------------------------------------------------------------------------------------
+
 router.get('/submission/today', authenticateToken, async (req, res) => {
   try {
     const cacheKey = `today_${req.user.id}`;
@@ -155,7 +193,15 @@ router.get('/submission/today', authenticateToken, async (req, res) => {
   }
 });
 
-// GET: /submission/list
+// -----------------------------------------------------------------------------------------
+// GET /submission/list
+// Retrieves a paginated list of form submissions for the authenticated user.
+// Used in the frontend to display submission data with filtering, sorting, and pagination.
+// Supports filtering by status, department, and date range, and sorting by specified fields.
+// Supports both admin and member roles, using the admin ID for members.
+// Caches the response for 5 minutes to improve performance.
+// -----------------------------------------------------------------------------------------
+
 router.get('/submission/list', validateQuery, handleValidationErrors, authenticateToken, async (req, res) => {
   try {
     const userIdToUse = req.user.role === 'member' ? await getAdminId(req.user.id) : req.user.id;
@@ -209,7 +255,6 @@ router.get('/submission/list', validateQuery, handleValidationErrors, authentica
     }
 
     const [count] = await database.query(countQuery, countParams);
-
     const response = {
       success: true,
       submissions: rows,
@@ -226,7 +271,14 @@ router.get('/submission/list', validateQuery, handleValidationErrors, authentica
   }
 });
 
-// GET: /submission/trends
+// -----------------------------------------------------------------------------------------
+// GET /submission/trends
+// Retrieves submission trends over the past 7 days, grouped by date and status.
+// Used in the frontend to display submission analytics.
+// Supports both admin and member roles, using the admin ID for members.
+// Caches the response for 5 minutes to improve performance.
+// -----------------------------------------------------------------------------------------
+
 router.get('/submission/trends', authenticateToken, async (req, res) => {
   try {
     const cacheKey = `trends_${req.user.id}`;
@@ -256,7 +308,14 @@ router.get('/submission/trends', authenticateToken, async (req, res) => {
   }
 });
 
-// POST: /submission/status
+// -----------------------------------------------------------------------------------------
+// POST /submission/status
+// Updates the status of a specific form submission.
+// Used in the frontend to modify the status of a submission.
+// Validates the submission ID and status, and clears relevant cache entries.
+// Supports both admin and member roles, using the admin ID for members.
+// -----------------------------------------------------------------------------------------
+
 router.post('/submission/status', validateStatusUpdate, handleValidationErrors, authenticateToken, async (req, res) => {
   try {
     const { submissionId, status } = req.body;
@@ -287,7 +346,13 @@ router.post('/submission/status', validateStatusUpdate, handleValidationErrors, 
   }
 });
 
-// POST: /contact
+// -----------------------------------------------------------------------------------------
+// POST /contact
+// Submits a contact message (support or feedback) for the authenticated user.
+// Used in the frontend to handle user support or feedback submissions.
+// Validates the message, type, and email (for support type) before insertion.
+// -----------------------------------------------------------------------------------------
+
 router.post('/contact', validateContact, handleValidationErrors, authenticateToken, async (req, res) => {
   try {
     const { email, message, type } = req.body;

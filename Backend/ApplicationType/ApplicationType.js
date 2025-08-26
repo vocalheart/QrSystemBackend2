@@ -5,10 +5,15 @@ const authenticateToken = require('../middleware/AuthenticationToken');
 const helmet = require('helmet');
 const { body, validationResult } = require('express-validator');
 
-// Apply helmet middleware
+// Apply helmet middleware for enhanced security
 router.use(helmet());
 
-// GET: Fetch all application types by user_id
+// -----------------------------------------------------------------------------------------
+// GET /applicationtype
+// Retrieves all application types for the authenticated user.
+// Used in the frontend (application.jsx) to display application types.
+// -----------------------------------------------------------------------------------------
+
 router.get('/applicationtype', authenticateToken, async (req, res) => {
   try {
     const sql = `SELECT name, id, user_id FROM ApplicationType WHERE user_id = ?`;
@@ -24,10 +29,13 @@ router.get('/applicationtype', authenticateToken, async (req, res) => {
   }
 });
 
+// -----------------------------------------------------------------------------------------
+// POST /applicationtype
+// Creates a new application type for the authenticated user.
+// Used in the frontend (application.jsx) to add a new application type.
+// Validates the name and checks for duplicates before insertion.
+// -----------------------------------------------------------------------------------------
 
-
-
-// POST: Add new application type
 router.post(
   '/applicationtype',
   authenticateToken,
@@ -61,9 +69,13 @@ router.post(
   }
 );
 
+// -----------------------------------------------------------------------------------------
+// DELETE /applicationtype/:id
+// Deletes an application type for the authenticated user by ID.
+// Used in the frontend (application.jsx) to remove an application type.
+// Ensures the application type exists and belongs to the user before deletion.
+// -----------------------------------------------------------------------------------------
 
-
-// DELETE: Remove an application type
 router.delete('/applicationtype/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
   const user_id = req.user.id;
@@ -83,7 +95,13 @@ router.delete('/applicationtype/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// PUT: Update application type name
+// -----------------------------------------------------------------------------------------
+// PUT /applicationtype/:id
+// Updates the name of an existing application type for the authenticated user.
+// Used in the frontend (application.jsx) to modify an application type.
+// Validates the new name and ensures the record exists and belongs to the user.
+// -----------------------------------------------------------------------------------------
+
 router.put(
   '/applicationtype/:id',
   authenticateToken,

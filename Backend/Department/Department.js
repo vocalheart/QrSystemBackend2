@@ -4,7 +4,13 @@ const { body, validationResult } = require('express-validator');
 const database = require('../database/mysql');
 const authenticateToken = require('../middleware/AuthenticationToken');
 
+// -----------------------------------------------------------------------------------------
 // POST /department
+// Creates a new department for the authenticated user.
+// Used in the frontend (Department.jsx) to add a department.
+// Validates the department name and inserts a notification upon creation.
+// -----------------------------------------------------------------------------------------
+
 router.post(
   '/department',
   authenticateToken,
@@ -48,7 +54,12 @@ router.post(
   }
 );
 
+// -----------------------------------------------------------------------------------------
 // GET /department
+// Retrieves all departments created by the authenticated user.
+// Used in the frontend (Department.jsx) to display department data.
+// -----------------------------------------------------------------------------------------
+
 router.get('/department', authenticateToken, async (req, res) => {
   const userId = req.user.id;
   try {
@@ -61,7 +72,13 @@ router.get('/department', authenticateToken, async (req, res) => {
   }
 });
 
+// -----------------------------------------------------------------------------------------
 // DELETE /department/:id
+// Deletes a department by ID for the authenticated user.
+// Used in the frontend (Department.jsx) to remove a department.
+// Ensures the department exists and belongs to the user before deletion.
+// -----------------------------------------------------------------------------------------
+
 router.delete('/department/:id', authenticateToken, async (req, res) => {
   const { id } = req.params;
   const userId = req.user.id;
@@ -78,7 +95,13 @@ router.delete('/department/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// -----------------------------------------------------------------------------------------
 // PUT /department/:id
+// Updates the name of an existing department for the authenticated user.
+// Used in the frontend (Department.jsx) to modify department details.
+// Validates the new name and ensures the department exists and belongs to the user.
+// -----------------------------------------------------------------------------------------
+
 router.put(
   '/department/:id',
   authenticateToken,

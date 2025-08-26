@@ -1,4 +1,3 @@
-
 const express = require('express');
 const router = express.Router();
 const authenticateToken = require('../middleware/AuthenticationToken');
@@ -6,7 +5,12 @@ const pool = require('../database/mysql');
 const validator = require('validator');
 const bcrypt = require('bcrypt');
 
+// -----------------------------------------------------------------------------------------
 // POST /create-member
+// Creates a new member user, restricted to admin users only.
+// Used in the frontend (createMember.jsx) to add a new member.
+// Validates name, email, and password, sanitizes inputs, and hashes the password.
+// -----------------------------------------------------------------------------------------
 router.post('/create-member', authenticateToken, async (req, res) => {
   const { name, email, password } = req.body;
   // Check if the user is an admin
@@ -64,7 +68,13 @@ router.post('/create-member', authenticateToken, async (req, res) => {
   }
 });
 
+// -----------------------------------------------------------------------------------------
 // GET /members
+// Retrieves all members created by the authenticated admin user.
+// Used in the frontend (createMember.jsx) to display the list of members.
+// Restricted to admin users only.
+// -----------------------------------------------------------------------------------------
+
 router.get('/members', authenticateToken, async (req, res) => {
   if (req.user.role !== 'admin') {
     return res.status(403).json({
@@ -88,7 +98,13 @@ router.get('/members', authenticateToken, async (req, res) => {
   }
 });
 
+// -----------------------------------------------------------------------------------------
 // DELETE /members/:id
+// Deletes a member user by ID, restricted to admin users who created the member.
+// Used in the frontend (createMember.jsx) to remove a member.
+// Ensures the member exists and was created by the authenticated admin.
+// -----------------------------------------------------------------------------------------
+
 router.delete('/members/:id', authenticateToken, async (req, res) => {
   if (req.user.role !== 'admin') {
     return res.status(403).json({
@@ -109,7 +125,13 @@ router.delete('/members/:id', authenticateToken, async (req, res) => {
   }
 });
 
+// -----------------------------------------------------------------------------------------
 // PUT /members/:id
+// Updates a member's name and email, restricted to admin users who created the member.
+// Used in the frontend (createMember.jsx) to edit member details.
+// Validates and sanitizes inputs, ensuring the email is unique.
+// -----------------------------------------------------------------------------------------
+
 router.put('/members/:id', authenticateToken, async (req, res) => {
   if (req.user.role !== 'admin') {
     return res.status(403).json({
