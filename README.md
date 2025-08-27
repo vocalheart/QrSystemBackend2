@@ -2,7 +2,7 @@ QRVibe - Visitor Management Platform
 
 Backend Hostes on aws
 Frontend Hosted pn aws
-database hosted- on mysql
+database hosted- on hostinger
  
 QRVibe is a modern, user-friendly web application designed to streamline visitor management for organizations. Built with React and Tailwind CSS, QRVibe offers a seamless experience for scheduling personalized demo sessions, generating QR codes for visitor check-ins, and managing visitor data efficiently. The platform features a responsive design, light/dark mode support, and robust accessibility to ensure inclusivity.
 Features
