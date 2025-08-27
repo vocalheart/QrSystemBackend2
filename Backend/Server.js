@@ -66,8 +66,7 @@ app.use((err, req, res, next) => {
   }
   res.status(500).json({ success: false, message: 'Server Error', error: err.message });
 });
-
 // Start server
-app.listen(port, () => {
-  console.log(`Server is running at http://localhost:${port}`);
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Server is running at http://0.0.0.0:${port}`);
 });
