@@ -50,6 +50,7 @@ router.post('/form/:code/submit', upload.single('resume'), async (req, res) => {
   const { name, email, reason, application_type } = req.body;
   const resume = req.file;
 
+  // Validate required fields
   if (!name || !email || !application_type) {
     return res.status(400).json({ message: 'Name, email, and application type are required' });
   }
@@ -58,12 +59,14 @@ router.post('/form/:code/submit', upload.single('resume'), async (req, res) => {
   }
 
   try {
+    // Validate QR code
     const [qrCode] = await database.query('SELECT id, user_id FROM qrcodes WHERE code = ?', [code]);
     if (!qrCode.length) {
       return res.status(404).json({ message: 'Invalid QR code' });
     }
     const { id: qr_code_id, user_id } = qrCode[0];
 
+    // Validate application type
     const [appType] = await database.query(
       'SELECT id, name FROM ApplicationType WHERE name = ? AND user_id = ?',
       [application_type, user_id]
@@ -72,6 +75,7 @@ router.post('/form/:code/submit', upload.single('resume'), async (req, res) => {
       return res.status(400).json({ message: 'Invalid application type' });
     }
 
+    // Handle resume upload
     let resumeUrl = null;
     if (resume) {
       const fileName = `${Date.now()}_${resume.originalname.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
@@ -99,14 +103,22 @@ router.post('/form/:code/submit', upload.single('resume'), async (req, res) => {
       }
     }
 
-    const [defaultStatus] = await database.query(
+    // Check for 'pending' status; create if missing
+    let [defaultStatus] = await database.query(
       'SELECT name FROM status WHERE name = ? AND user_id = ?',
       ['pending', user_id]
     );
     if (!defaultStatus.length) {
-      return res.status(500).json({ message: 'Default status "pending" not found for user' });
+      // Create 'pending' status
+      await database.query(
+        'INSERT INTO status (user_id, name, created_at) VALUES (?, ?, NOW())',
+        [user_id, 'pending']
+      );
+      defaultStatus = [{ name: 'pending' }]; // Update defaultStatus to proceed
+      console.log(`Created 'pending' status for user_id: ${user_id}`);
     }
 
+    // Insert form submission
     const [result] = await database.query(
       `INSERT INTO form_submissions 
       (qr_code_id, user_id, name, email, reason, application_type, resume, created_at, status, reviewed, designation, department_name) 
@@ -114,12 +126,14 @@ router.post('/form/:code/submit', upload.single('resume'), async (req, res) => {
       [qr_code_id, user_id, name, email, reason || null, appType[0].name, resumeUrl, defaultStatus[0].name, 0]
     );
 
+    // Create notification
     const notiMessage = `New ${appType[0].name} submission from "${name}".`;
     await database.query(
       `INSERT INTO Notification (user_id, type, message, status) VALUES (?, ?, ?, 'unread')`,
       [user_id, 'Form Submission', notiMessage]
     );
 
+    // Send email notification
     const [user] = await database.query('SELECT email FROM users WHERE id = ?', [user_id]);
     if (user.length && user[0].email) {
       const mailOptions = {
