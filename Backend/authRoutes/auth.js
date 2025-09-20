@@ -8,10 +8,16 @@ const geoip = require('geoip-lite');
 const pool = require('../database/mysql');
 const authenticateToken = require('../middleware/AuthenticationToken');
 const transporter = require('../database/Nodemailer');
+const { OAuth2Client } = require('google-auth-library');
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Validate environment variables
 if (!process.env.JWT_SECRET) {
   throw new Error('JWT_SECRET must be defined in .env');
+}
+if (!process.env.GOOGLE_CLIENT_ID) {
+  throw new Error('GOOGLE_CLIENT_ID must be defined in .env');
 }
 
 // Helper function to check if IP is localhost
@@ -270,7 +276,7 @@ router.post('/signup', async (req, res) => {
     }
 
     const [result] = await pool.query(
-      'INSERT INTO users (name, email, password, ip_addresses, city, country, region, role, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())',
+      'INSERT INTO users (name, email, password, ip_addresses, city, country, region, role, created_at, google_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?)',
       [
         tempUser.name,
         sanitizedEmail,
@@ -280,19 +286,15 @@ router.post('/signup', async (req, res) => {
         tempUser.country,
         tempUser.region,
         'admin',
+        tempUser.google_id || null
       ]
     );
 
     await pool.query('DELETE FROM temp_signups WHERE email = ?', [sanitizedEmail]);
 
-    // const token = jwt.sign({ id: result.insertId, email: sanitizedEmail, role: 'admin' }, process.env.JWT_SECRET, {
-    //   expiresIn: '7d',
-    // });
-
     res.status(201).json({
       message: 'User registered successfully',
       data: {
-        // token,
         user: {
           id: result.insertId,
           name: tempUser.name,
@@ -314,68 +316,186 @@ router.post('/signup', async (req, res) => {
   }
 });
 
-// Login
+// Login (integrated with Google auth)
 router.post('/login', async (req, res) => {
-  const { email, password, ip } = req.body;
+  const { email, password, ip, googleToken } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).json({
-      error: 'Validation failed',
-      message: 'Email and password are required',
-    });
-  }
-  try {
-    const sanitizedEmail = validator.normalizeEmail(email.toLowerCase());
-    const clientIp = ip || req.ip;
+  if (googleToken) {
+    // Handle Google login/signup
+    try {
+      const ticket = await client.verifyIdToken({
+        idToken: googleToken,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
 
-    const [users] = await pool.query('SELECT id, name, email, password, ip_addresses, role FROM users WHERE email = ?', [
-      sanitizedEmail,
-    ]);
-    if (users.length === 0) {
-      return res.status(401).json({
-        error: 'Invalid credentials',
-        message: 'Email or password is incorrect',
+      const payload = ticket.getPayload();
+      const google_id = payload.sub;
+      const googleEmail = validator.normalizeEmail(payload.email);
+      const googleName = payload.name;
+
+      const clientIp = ip || req.ip;
+
+      // Check if user exists by email
+      const [users] = await pool.query('SELECT * FROM users WHERE email = ?', [googleEmail]);
+
+      if (users.length > 0) {
+        const user = users[0];
+        if (user.google_id === google_id) {
+          // Existing Google user, perform login
+          const updatedIpAddresses = updateIpAddresses(user.ip_addresses, clientIp);
+          await pool.query('UPDATE users SET ip_addresses = ? WHERE id = ?', [updatedIpAddresses, user.id]);
+
+          const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET, {
+            expiresIn: '7d',
+          });
+
+          res.status(200).json({
+            message: 'Login successful',
+            data: {
+              token,
+              user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                ip_addresses: JSON.parse(updatedIpAddresses),
+                role: user.role,
+              },
+            },
+          });
+        } else {
+          // Email exists but not a Google account
+          return res.status(400).json({
+            error: 'Email exists',
+            message: 'This email is already registered with a password. Please use password login.',
+          });
+        }
+      } else {
+        // New Google user, create account (no OTP needed, as Google verified)
+        let city = 'Unknown', country = 'Unknown', region = 'Unknown';
+        if (!isLocalhost(clientIp)) {
+          try {
+            const response = await axios.get(`http://ip-api.com/json/${clientIp}`, { timeout: 3000 });
+            if (response.data.status === 'success') {
+              city = response.data.city || 'Unknown';
+              country = response.data.country || 'Unknown';
+              region = response.data.regionName || 'Unknown';
+            } else {
+              const geo = geoip.lookup(clientIp);
+              if (geo) {
+                city = geo.city || 'Unknown';
+                country = geo.country || 'Unknown';
+                region = geo.region || 'Unknown';
+              }
+            }
+          } catch (geoError) {
+            console.warn('Geolocation lookup failed:', geoError.message);
+            const geo = geoip.lookup(clientIp);
+            if (geo) {
+              city = geo.city || 'Unknown';
+              country = geo.country || 'Unknown';
+              region = geo.region || 'Unknown';
+            }
+          }
+        } else {
+          city = country = region = 'Localhost';
+        }
+
+        const ipAddresses = updateIpAddresses(null, clientIp);
+
+        const [result] = await pool.query(
+          'INSERT INTO users (name, email, password, ip_addresses, city, country, region, role, created_at, google_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?)',
+          [googleName, googleEmail, null, ipAddresses, city, country, region, 'admin', google_id]
+        );
+
+        const token = jwt.sign({ id: result.insertId, email: googleEmail, role: 'admin' }, process.env.JWT_SECRET, {
+          expiresIn: '7d',
+        });
+
+        res.status(200).json({
+          message: 'Signup and login successful',
+          data: {
+            token,
+            user: {
+              id: result.insertId,
+              name: googleName,
+              email: googleEmail,
+              ip_addresses: JSON.parse(ipAddresses),
+              city,
+              region,
+              country,
+              role: 'admin',
+            },
+          },
+        });
+      }
+    } catch (error) {
+      console.error('Google auth error:', error.message);
+      return res.status(400).json({
+        error: 'Google authentication failed',
+        message: 'Invalid Google token or server error.',
       });
     }
-    const user = users[0];
-    if (!['admin', 'member'].includes(user.role)) {
-      return res.status(403).json({ error: 'Invalid user role' });
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({
-        error: 'Invalid credentials',
-        message: 'Email or password is incorrect',
+  } else {
+    // Regular password login
+    if (!email || !password) {
+      return res.status(400).json({
+        error: 'Validation failed',
+        message: 'Email and password are required',
       });
     }
+    try {
+      const sanitizedEmail = validator.normalizeEmail(email.toLowerCase());
+      const clientIp = ip || req.ip;
 
-    const updatedIpAddresses = updateIpAddresses(user.ip_addresses, clientIp);
-    await pool.query('UPDATE users SET ip_addresses = ? WHERE id = ?', [updatedIpAddresses, user.id]);
+      const [users] = await pool.query('SELECT id, name, email, password, ip_addresses, role FROM users WHERE email = ?', [
+        sanitizedEmail,
+      ]);
+      if (users.length === 0) {
+        return res.status(401).json({
+          error: 'Invalid credentials',
+          message: 'Email or password is incorrect',
+        });
+      }
+      const user = users[0];
+      if (!['admin', 'member'].includes(user.role)) {
+        return res.status(403).json({ error: 'Invalid user role' });
+      }
 
-    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET, {
-      expiresIn: '7d',
-    });
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
+        return res.status(401).json({
+          error: 'Invalid credentials',
+          message: 'Email or password is incorrect',
+        });
+      }
 
-    res.status(200).json({
-      message: 'Login successful',
-      data: {
-        token,
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          ip_addresses: JSON.parse(updatedIpAddresses),
-          role: user.role,
+      const updatedIpAddresses = updateIpAddresses(user.ip_addresses, clientIp);
+      await pool.query('UPDATE users SET ip_addresses = ? WHERE id = ?', [updatedIpAddresses, user.id]);
+
+      const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET, {
+        expiresIn: '7d',
+      });
+
+      res.status(200).json({
+        message: 'Login successful',
+        data: {
+          token,
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            ip_addresses: JSON.parse(updatedIpAddresses),
+            role: user.role,
+          },
         },
-      },
-    });
-  } catch (error) {
-    console.error('Login Error:', error.message);
-    res.status(500).json({
-      error: 'Server error',
-      message: 'Failed to log in',
-    });
+      });
+    } catch (error) {
+      console.error('Login Error:', error.message);
+      res.status(500).json({
+        error: 'Server error',
+        message: 'Failed to log in',
+      });
+    }
   }
 });
 
@@ -429,36 +549,23 @@ router.post('/logout', authenticateToken, async (req, res) => {
 // Request OTP (for authenticated users)
 router.post('/request-otp', authenticateToken, async (req, res) => {
   const { email } = req.body;
-
   if (!email) {
-    return res.status(400).json({
-      error: 'Validation failed',
-      message: 'Email is required',
-    });
+    return res.status(400).json({error: 'Validation failed', message: 'Email is required', });
   }
 
   try {
     const sanitizedEmail = validator.normalizeEmail(email.toLowerCase());
     if (sanitizedEmail !== req.user.email) {
-      return res.status(403).json({
-        error: 'Unauthorized',
-        message: 'Email does not match authenticated user',
-      });
+      return res.status(403).json({ error: 'Unauthorized',message: 'Email does not match authenticated user',});
     }
 
     const [users] = await pool.query('SELECT id FROM users WHERE email = ?', [sanitizedEmail]);
-    if (users.length === 0) {
-      return res.status(404).json({
-        error: 'User not found',
-        message: 'This email is not registered',
-      });
+    if (users.length === 0) {return res.status(404).json({ error: 'User not found',message: 'This email is not registered',});
     }
 
     const otp = generateOtp();
     const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
-
     await pool.query('UPDATE users SET otp = ?, otp_expires = ? WHERE email = ?', [otp, otpExpires, sanitizedEmail]);
-
     const mailOptions = {
       from: '"VocalHeart Infotech Pvt. Ltd." <vocalheart.tech@gmail.com>',
       to: sanitizedEmail,
@@ -536,14 +643,8 @@ router.post('/request-otp', authenticateToken, async (req, res) => {
 // Forgot Password
 router.post('/forgot-password', async (req, res) => {
   const { email } = req.body;
-
-  if (!email) {
-    return res.status(400).json({
-      error: 'Validation failed',
-      message: 'Email is required',
-    });
+  if (!email) { return res.status(400).json({ error: 'Validation failed', message: 'Email is required',});
   }
-
   try {
     const sanitizedEmail = validator.normalizeEmail(email.toLowerCase());
     const [users] = await pool.query('SELECT id FROM users WHERE email = ?', [sanitizedEmail]);
@@ -971,6 +1072,5 @@ router.put('/user/:id', authenticateToken, async (req, res) => {
     });
   }
 });
-
 
 module.exports = router;
