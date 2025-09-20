@@ -285,14 +285,14 @@ router.post('/signup', async (req, res) => {
 
     await pool.query('DELETE FROM temp_signups WHERE email = ?', [sanitizedEmail]);
 
-    const token = jwt.sign({ id: result.insertId, email: sanitizedEmail, role: 'admin' }, process.env.JWT_SECRET, {
-      expiresIn: '7d',
-    });
+    // const token = jwt.sign({ id: result.insertId, email: sanitizedEmail, role: 'admin' }, process.env.JWT_SECRET, {
+    //   expiresIn: '7d',
+    // });
 
     res.status(201).json({
       message: 'User registered successfully',
       data: {
-        token,
+        // token,
         user: {
           id: result.insertId,
           name: tempUser.name,
@@ -971,5 +971,6 @@ router.put('/user/:id', authenticateToken, async (req, res) => {
     });
   }
 });
+
 
 module.exports = router;
