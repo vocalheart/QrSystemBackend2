@@ -639,15 +639,27 @@ router.post('/request-otp', authenticateToken, async (req, res) => {
     });
   }
 });
-
 // Forgot Password
 router.post('/forgot-password', async (req, res) => {
   const { email } = req.body;
-  if (!email) { return res.status(400).json({ error: 'Validation failed', message: 'Email is required',});
+
+  if (!email) {
+    return res.status(400).json({
+      error: 'Validation failed',
+      message: 'Email is required',
+    });
   }
+
   try {
+    // Normalize email
     const sanitizedEmail = validator.normalizeEmail(email.toLowerCase());
-    const [users] = await pool.query('SELECT id FROM users WHERE email = ?', [sanitizedEmail]);
+
+    // Fetch user by email
+    const [users] = await pool.query(
+      'SELECT id, google_id FROM users WHERE email = ?',
+      [sanitizedEmail]
+    );
+
     if (users.length === 0) {
       return res.status(404).json({
         error: 'User not found',
@@ -655,14 +667,28 @@ router.post('/forgot-password', async (req, res) => {
       });
     }
 
+    const user = users[0];
+
+    // Check if user signed up via Google
+    if (user.google_id) {
+      return res.status(400).json({
+        error: 'User Not Found',
+        // This account uses Google login. Please use Google sign-in.
+        message: 'User Not Found',
+      });
+    }
+
+    // Normal account → generate OTP
     const otp = generateOtp();
     const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
+    // Save OTP in temp_resets table
     await pool.query(
       'INSERT INTO temp_resets (email, otp, otp_expires) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE otp = ?, otp_expires = ?',
       [sanitizedEmail, otp, otpExpires, otp, otpExpires]
     );
 
+    // Mail options
     const mailOptions = {
       from: '"VocalHeart Infotech Pvt. Ltd." <vocalheart.tech@gmail.com>',
       to: sanitizedEmail,
@@ -697,6 +723,7 @@ router.post('/forgot-password', async (req, res) => {
       `,
     };
 
+    // Send email with retry logic
     let attempts = 0;
     const maxAttempts = 2;
     let emailSent = false;
@@ -728,6 +755,7 @@ router.post('/forgot-password', async (req, res) => {
       message: 'Verification code sent',
       data: { details: 'A 6-digit verification code has been sent to your email.' },
     });
+
   } catch (error) {
     console.error('Forgot Password Error:', error.message);
     res.status(500).json({
