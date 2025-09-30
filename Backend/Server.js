@@ -19,6 +19,7 @@ const status = require('./ApplicationStatus/Status');
 const app = express();
 const port = process.env.PORT || 5000;
 
+
 // Middleware
 app.use(helmet());
 app.use(express.json());
@@ -53,6 +54,7 @@ app.use('/api/auth', authRoute);
 app.use('/api', status);
 
 
+
 // Health check
 app.get('/', (req, res) => {
   res.status(200).json({ message: 'Server is running' });
@@ -66,7 +68,17 @@ app.use((err, req, res, next) => {
   }
   res.status(500).json({ success: false, message: 'Server Error', error: err.message });
 });
+// In Express, ensure COOP is not overly restrictive
+app.use((req, res, next) => {
+  res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+  next();
+});
+app.use((req, res, next) => {
+  res.removeHeader('Cross-Origin-Opener-Policy');
+  next();
+});
 // Start server
-app.listen(port, '0.0.0.0', () => {
-  console.log(`Server is running at http://0.0.0.0:${port}`);
+app.listen(port, () => {
+  console.log(`Server is running at http://localhost:${port}`);
 });
