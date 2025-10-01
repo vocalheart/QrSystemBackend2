@@ -334,38 +334,65 @@ router.get('/form/resume/:id', authenticateToken, async (req, res) => {
 // GET /formDetails
 router.get('/formDetails', authenticateToken, async (req, res) => {
   try {
-    let submissionQuery;
-    let queryParams;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || '';
+    const statusFilter = req.query.status || 'all';
 
+    let userId;
     if (req.user.role === 'member') {
       const [user] = await database.query('SELECT created_by FROM users WHERE id = ?', [req.user.id]);
       if (!user.length || !user[0].created_by) {
         return res.status(403).json({ message: 'No associated admin found for this member' });
       }
-      submissionQuery = `
-        SELECT id, user_id, name, email, number, created_at, resume, reason, 
-               application_type, status, reviewed, designation, department_name, comments
-        FROM form_submissions
-        WHERE user_id = ?
-      `;
-      queryParams = [user[0].created_by];
+      userId = user[0].created_by;
     } else {
-      submissionQuery = `
-        SELECT id, user_id, name, email, number, created_at, resume, reason, 
-               application_type, status, reviewed, designation, department_name, comments
-        FROM form_submissions
-        WHERE user_id = ?
-      `;
-      queryParams = [req.user.id];
+      userId = req.user.id;
     }
 
-    const [submissions] = await database.query(submissionQuery, queryParams);
+    // Build WHERE clause
+    let whereConditions = ['user_id = ?'];
+    let params = [userId];
+
+    if (statusFilter !== 'all') {
+      whereConditions.push('status = ?');
+      params.push(statusFilter);
+    }
+
+    if (search.trim()) {
+      whereConditions.push(
+        '(name LIKE ? OR email LIKE ? OR number LIKE ? OR application_type LIKE ?)'
+      );
+      const searchTerm = `%${search.trim()}%`;
+      params.push(searchTerm, searchTerm, searchTerm, searchTerm);
+    }
+
+    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+
+    // Count total
+    const countQuery = `SELECT COUNT(*) as total FROM form_submissions ${whereClause}`;
+    const [countResult] = await database.query(countQuery, params);
+    const total = countResult[0].total;
+
+    // Fetch paginated data
+    const offset = (page - 1) * limit;
+    const selectQuery = `
+      SELECT id, user_id, name, email, number, created_at, resume, reason, 
+             application_type, status, reviewed, designation, department_name, comments
+      FROM form_submissions
+      ${whereClause}
+      ORDER BY created_at DESC
+      LIMIT ? OFFSET ?
+    `;
+    const selectParams = [...params, limit, offset];
+    const [submissions] = await database.query(selectQuery, selectParams);
 
     const formattedSubmissions = submissions.map((submission) => ({
       ...submission,
       application_type_name: submission.application_type,
     }));
-    res.status(200).json({ data: formattedSubmissions });
+
+    res.status(200).json({ data: formattedSubmissions, total });
   } catch (error) {
     console.error('Error fetching form submissions:', error);
     res.status(500).json({ message: 'Failed to fetch submissions' });
