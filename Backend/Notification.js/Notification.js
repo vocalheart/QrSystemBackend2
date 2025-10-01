@@ -138,13 +138,7 @@ router.get(
 // Supports both admin and member roles, using the admin ID for members.
 // -----------------------------------------------------------------------------------------
 
-router.post(
-  '/notification/status/:id',
-  authenticateToken,
-  [
-    param('id').isInt({ min: 1 }).withMessage('Invalid notification ID'),
-    body('status').isIn(['read', 'unread']).withMessage('Status must be either "read" or "unread"'),
-  ],
+router.post('/notification/status/:id',authenticateToken, [ param('id').isInt({ min: 1 }).withMessage('Invalid notification ID'),body('status').isIn(['read', 'unread']).withMessage('Status must be either "read" or "unread"'),],
   async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -190,6 +184,92 @@ router.post(
     }
   }
 );
+
+// -----------------------------------------------------------------------------------------
+// DELETE /notification/:id
+// Deletes a specific notification for the authenticated user.
+// Used in the frontend to remove a single notification.
+// Validates the notification ID, ensuring the notification belongs to the user.
+// Supports both admin and member roles, using the admin ID for members.
+// -----------------------------------------------------------------------------------------
+
+router.delete(
+  '/notification/:id',
+  authenticateToken,
+  [param('id').isInt({ min: 1 }).withMessage('Invalid notification ID')],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+
+    const id = req.params.id;
+
+    try {
+      const user_id = await getUserIdToUse(req, res);
+      if (!user_id) return;
+
+      const checkQuery = `SELECT id FROM Notification WHERE id = ? AND user_id = ?`;
+      const [existing] = await database.query(checkQuery, [id, user_id]);
+      if (existing.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Notification not found or unauthorized',
+        });
+      }
+
+      const deleteQuery = `DELETE FROM Notification WHERE id = ? AND user_id = ?`;
+      const [result] = await database.query(deleteQuery, [id, user_id]);
+
+      if (result.affectedRows === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Failed to delete notification',
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: 'Notification deleted successfully',
+      });
+    } catch (error) {
+      console.error('Error deleting notification:', { error: error.message, stack: error.stack });
+      res.status(500).json({
+        success: false,
+        message: 'Failed to delete notification',
+      });
+    }
+  }
+);
+
+// -----------------------------------------------------------------------------------------
+// DELETE /notification-delete-all
+// Deletes all notifications for the authenticated user.
+// Used in the frontend to bulk-remove all notifications.
+// Supports both admin and member roles, using the admin ID for members.
+// -----------------------------------------------------------------------------------------
+
+router.delete('/notification-delete-all', authenticateToken, async (req, res) => {
+  try {
+    const user_id = await getUserIdToUse(req, res);
+    if (!user_id) return;
+
+    const query = `DELETE FROM Notification WHERE user_id = ?`;
+    const [result] = await database.query(query, [user_id]);
+
+    res.status(200).json({
+      success: true,
+      message: 'All notifications deleted',
+      affectedRows: result.affectedRows,
+    });
+  } catch (error) {
+    console.error('Error deleting all notifications:', { error: error.message, stack: error.stack });
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete all notifications',
+    });
+  }
+});
 
 // -----------------------------------------------------------------------------------------
 // PUT /notification-mark-read
