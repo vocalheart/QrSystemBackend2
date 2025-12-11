@@ -331,6 +331,7 @@ router.get('/form/resume/:id', authenticateToken, async (req, res) => {
   }
 });
 
+
 // GET /formDetails
 router.get('/formDetails', authenticateToken, async (req, res) => {
   try {
@@ -340,59 +341,93 @@ router.get('/formDetails', authenticateToken, async (req, res) => {
     const statusFilter = req.query.status || 'all';
 
     let userId;
+
     if (req.user.role === 'member') {
-      const [user] = await database.query('SELECT created_by FROM users WHERE id = ?', [req.user.id]);
+      const [user] = await database.query(
+        'SELECT created_by FROM users WHERE id = ?',
+        [req.user.id]
+      );
+
       if (!user.length || !user[0].created_by) {
-        return res.status(403).json({ message: 'No associated admin found for this member' });
+        return res
+          .status(403)
+          .json({ message: 'No associated admin found for this member' });
       }
+
       userId = user[0].created_by;
     } else {
       userId = req.user.id;
     }
 
     // Build WHERE clause
-    let whereConditions = ['user_id = ?'];
+    let whereConditions = ['fs.user_id = ?'];
     let params = [userId];
 
+    //  Only fetch color_id empty OR NULL
+    whereConditions.push('(fs.color_id IS NULL OR fs.color_id = "")');
+
     if (statusFilter !== 'all') {
-      whereConditions.push('status = ?');
+      whereConditions.push('fs.status = ?');
       params.push(statusFilter);
     }
 
     if (search.trim()) {
       whereConditions.push(
-        '(name LIKE ? OR email LIKE ? OR number LIKE ? OR application_type LIKE ?)'
+        '(fs.name LIKE ? OR fs.email LIKE ? OR fs.number LIKE ? OR fs.application_type LIKE ?)'
       );
       const searchTerm = `%${search.trim()}%`;
       params.push(searchTerm, searchTerm, searchTerm, searchTerm);
     }
 
-    const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : '';
+    const whereClause =
+      whereConditions.length > 0
+        ? `WHERE ${whereConditions.join(' AND ')}`
+        : '';
 
     // Count total
-    const countQuery = `SELECT COUNT(*) as total FROM form_submissions ${whereClause}`;
+    const countQuery = `SELECT COUNT(*) as total FROM form_submissions fs ${whereClause}`;
     const [countResult] = await database.query(countQuery, params);
     const total = countResult[0].total;
 
-    // Fetch paginated data
+    // Pagination
     const offset = (page - 1) * limit;
+
+    // Fetch data
     const selectQuery = `
-      SELECT id, user_id, name, email, number, created_at, resume, reason, 
-             application_type, status, reviewed, designation, department_name, comments
-      FROM form_submissions
+      SELECT 
+        fs.id, 
+        fs.user_id, 
+        fs.name, 
+        fs.email, 
+        fs.number, 
+        fs.created_at, 
+        fs.resume, 
+        fs.reason, 
+        fs.application_type, 
+        fs.status, 
+        fs.reviewed, 
+        fs.designation, 
+        fs.department_name, 
+        fs.comments,
+        fs.color_id,
+        c.color_name
+      FROM form_submissions fs
+      LEFT JOIN colors c ON fs.color_id = c.id
       ${whereClause}
-      ORDER BY created_at DESC
+      ORDER BY fs.created_at DESC
       LIMIT ? OFFSET ?
     `;
+
     const selectParams = [...params, limit, offset];
+
     const [submissions] = await database.query(selectQuery, selectParams);
 
-    const formattedSubmissions = submissions.map((submission) => ({
-      ...submission,
-      application_type_name: submission.application_type,
+    const formattedData = submissions.map((s) => ({
+      ...s,
+      application_type_name: s.application_type,
     }));
 
-    res.status(200).json({ data: formattedSubmissions, total });
+    res.status(200).json({ data: formattedData, total });
   } catch (error) {
     console.error('Error fetching form submissions:', error);
     res.status(500).json({ message: 'Failed to fetch submissions' });
@@ -673,4 +708,45 @@ router.get('/qrcodes/data', authenticateToken, async (req, res) => {
   }
 });
 
+router.patch('/formDetails/:id/color', async (req, res) => {
+  const submissionId = req.params.id;
+  let { color_id } = req.body;  // ← frontend se string ya number aa sakta hai
+
+  try {
+    // Fix 1: Agar empty string ya invalid value aaye to null kar do
+    const colorIdToSave =
+      color_id === "" ||
+        color_id === null ||
+        color_id === undefined ||
+        isNaN(color_id)
+        ? null
+        : parseInt(color_id, 10);  // ← string ko proper integer banao
+
+    // Fix 2: Query mein updated_at bhi update karo (optional but good)
+    const [result] = await database.query(`UPDATE form_submissions SET color_id = ?, updated_at = NOW() WHERE id = ?`,
+      [colorIdToSave, submissionId]
+    );
+
+    // Fix 3: Agar koi row update na ho to 404 bhejo
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Submission not found or no change made"
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Color updated successfully"
+    });
+
+  } catch (err) {
+    console.error("COLOR UPDATE ERROR:", err); // ← Ye line bahut zaroori hai
+    res.status(500).json({
+      success: false,
+      message: "Failed to update color",
+      error: err.message  // ← development mein ye dikhao, production mein hata dena
+    });
+  }
+});
 module.exports = router;

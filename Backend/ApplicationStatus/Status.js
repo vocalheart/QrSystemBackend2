@@ -47,10 +47,8 @@ router.post(
       if (existingStatus.length > 0) {
         return res.status(400).json({ message: 'Status name already exists' });
       }
-
       const sql = `INSERT INTO status (user_id, name, created_at) VALUES (?, ?, NOW())`;
       const [result] = await database.query(sql, [user_id, name]);
-
       const type = 'Status';
       const notiMessage = `New status "${name}" added`;
       const insertNotification = `INSERT INTO Notification (user_id, type, message, status) VALUES (?, ?, ?, 'unread')`;

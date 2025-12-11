@@ -2,7 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 require('dotenv').config();
-
 const allowedOrigins = require('./cors/corsOrigins');
 const authRoute = require('./authRoutes/auth');
 const Notification = require('./Notification.js/Notification');
@@ -16,11 +15,12 @@ const Profile = require('./Profile/Profile');
 const FormSubmission = require('./FormSubmit/FormSubmission');
 const CreateMember = require('./createmembers/createMembers');
 const status = require('./ApplicationStatus/Status');
+const colors = require('./colors/color');
+const documents = require('./documents/documents');
+
 const app = express();
 const port = process.env.PORT || 5000;
-
-
-// Middleware
+// Middleware         
 app.use(helmet());
 app.use(express.json());
 app.use(
@@ -48,11 +48,12 @@ app.use('/api', designation);
 app.use('/api', Notification);
 app.use('/api', department);
 app.use('/api', qrCode);
-app.use('/api', submissionRoutes);
+app.use('/api', submissionRoutes);    
 app.use('/api', FormSubmission);
 app.use('/api/auth', authRoute);
-app.use('/api', status);
-
+app.use('/api', status);  
+app.use('/api', colors)
+app.use('/api', documents)
 
 
 // Health check
@@ -62,7 +63,7 @@ app.get('/', (req, res) => {
 
 // Global error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
+  console.error('Error:', err);       
   if (err.message.includes('Not allowed by CORS')) {
     return res.status(403).json({ success: false, message: err.message });
   }
@@ -73,11 +74,13 @@ app.use((req, res, next) => {
   res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
   res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
   next();
-});
+});   
 app.use((req, res, next) => {
   res.removeHeader('Cross-Origin-Opener-Policy');
   next();
 });
+
+// ONLY FOR TESTING
 // Start server
 app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
