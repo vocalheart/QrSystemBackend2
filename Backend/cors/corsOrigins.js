@@ -10,7 +10,6 @@ const allowedOrigins = [
   'http://localhost:5174', // Additional local development URL
   'http://localhost:3000', // Common local development URL (e.g., React default port)
   'https://admin.vocalheart.com', // Production admin dashboard URL
-  'https://visits.vocalheart.com', // Production visits application URL
   'https://Qr-Image.s3.us-east-005.backblazeb2.com' // Backblaze B2 storage URL for QR images
 ];
 

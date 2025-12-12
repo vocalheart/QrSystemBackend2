@@ -460,7 +460,6 @@ router.post('/login', async (req, res) => {
       if (!['admin', 'member'].includes(user.role)) {
         return res.status(403).json({ error: 'Invalid user role' });
       }
-
       const isMatch = await bcrypt.compare(password, user.password);
       if (!isMatch) {
         return res.status(401).json({
@@ -468,14 +467,11 @@ router.post('/login', async (req, res) => {
           message: 'Email or password is incorrect',
         });
       }
-
       const updatedIpAddresses = updateIpAddresses(user.ip_addresses, clientIp);
       await pool.query('UPDATE users SET ip_addresses = ? WHERE id = ?', [updatedIpAddresses, user.id]);
-
       const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, process.env.JWT_SECRET, {
         expiresIn: '7d',
       });
-
       res.status(200).json({
         message: 'Login successful',
         data: {
@@ -943,14 +939,12 @@ router.post('/reset-password', async (req, res) => {
       message: 'Email, OTP, and password are required',
     });
   }
-
   if (!validator.isLength(password, { min: 8 })) {
     return res.status(400).json({
       error: 'Invalid password',
       message: 'Password must be at least 8 characters long',
     });
   }
-
   try {
     const sanitizedEmail = validator.normalizeEmail(email.toLowerCase());
     const [tempResets] = await pool.query(
