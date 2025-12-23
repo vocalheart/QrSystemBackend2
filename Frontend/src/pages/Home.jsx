@@ -1,286 +1,430 @@
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  QrCodeIcon,
-  MapPinIcon,
-  CheckCircleIcon,
-  DocumentTextIcon,
-  UsersIcon,
-  EnvelopeIcon,
-  UserIcon,
-  BuildingOfficeIcon,
-} from '@heroicons/react/24/outline';
+  QrCode,
+  MapPin,
+  CheckCircle,
+  FileText,
+  Users,
+  Mail,
+  User,
+  Building2,
+  Twitter,
+  Linkedin,
+} from 'lucide-react';
+
+import img1 from '../assets/qrbased.png'
 
 export default function Home() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-300 dark:from-gray-800 dark:to-gray-900 text-[12px]">
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-r from-pink-500 to-purple-500 dark:from-pink-600 dark:to-purple-600 text-white py-16 sm:py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 text-center">
-          <h1 className="text-4xl sm:text-5xl font-bold mb-4 animate-fade-in">
-            Welcome to QRVibe
-          </h1>
-          <p className="text-lg sm:text-xl text-gray-100 dark:text-gray-200 mb-8 max-w-3xl mx-auto">
-            Streamline office visitor management with QRVibe’s secure, QR-based technology. Enhance security, simplify check-ins, and manage visitors effortlessly.
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <button
-              onClick={() => navigate('/get-started')}
-              className="px-6 py-3 bg-white text-pink-600 dark:text-pink-400 font-semibold rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-300 text-[12px] shadow-md hover:scale-105"
-            >
-              Get Started
-            </button>
-            <button
-              onClick={() => navigate('/usage')}
-              className="px-6 py-3 bg-transparent border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-pink-600 dark:hover:text-pink-400 transition-colors duration-300 text-[12px] shadow-md hover:scale-105"
-            >
-              Learn More
-            </button>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-slate-100 text-slate-900" style={{ fontSize: '12px', fontFamily: 'Inter, sans-serif' }}>
+      {/* QR Code Hero Section */}
+      <section className="relative py-12 sm:py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center gap-8">
+          {/* LEFT SIDE - IMAGE SECTION WITH WHITE BG */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
+            className="flex-1 text-center md:text-left"
+          >
+            {/* WHITE BG FOR IMAGE SECTION */}
+            <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-xl">
+              {/* RESPONSIVE IMAGE */}
+              <div className="w-full max-w-md mx-auto mb-6">
+                <img 
+                  src={img1} 
+                  alt="QRVibe Hero"
+                  className="w-full h-auto max-h-64 object-contain rounded-lg"
+                />
+              </div>
+              
+              {/* BUTTONS WITH bg-indigo-500 text-white */}
+              <motion.div
+                className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start"
+              >
+                <button
+                  onClick={() => navigate('/get-started')}
+                  className="px-6 py-3 bg-indigo-500 text-white font-semibold rounded-lg hover:bg-indigo-600 hover:shadow-lg transform hover:scale-105 transition-all duration-200 shadow-md flex-1 sm:flex-none"
+                >
+                  Get Started
+                </button>
+                <button
+                  onClick={() => navigate('/usage')}
+                  className="px-6 py-3 bg-indigo-500 text-white font-semibold rounded-lg hover:bg-indigo-600 hover:shadow-lg transform hover:scale-105 transition-all duration-200 shadow-md flex-1 sm:flex-none"
+                >
+                  Learn More
+                </button>
+              </motion.div>
+            </div>
+          </motion.div>
+          
+          {/* RIGHT SIDE - QR CODE */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.7, delay: 0.3 }}
+            className="flex-1 flex justify-center mt-6 md:mt-0"
+          >
+            <div className="relative max-w-xs mx-auto">
+              {/* QR Code Display Frame */}
+              <div className="relative bg-gradient-to-br from-slate-900 to-indigo-900 rounded-2xl p-4 shadow-2xl border-2 border-indigo-800 overflow-hidden">
+                {/* Header */}
+                <div className="bg-gradient-to-r from-indigo-700 to-purple-700 text-white p-3 rounded-t-lg text-center font-semibold text-sm flex items-center justify-between">
+                  <span className="flex items-center">
+                    <QrCode className="w-5 h-5 mr-2" />
+                    QRVibe Access Code
+                  </span>
+                  <div className="flex gap-2">
+                    <div className="w-2 h-2 rounded-full bg-white/40 animate-pulse"></div>
+                    <div className="w-2 h-2 rounded-full bg-white/40 animate-pulse" style={{ animationDelay: '0.3s' }}></div>
+                  </div>
+                </div>
+                {/* QR Code Area */}
+                <div className="bg-white rounded-lg p-6 flex flex-col items-center justify-center relative">
+                  {/* Mock QR Code */}
+                  <div className="w-56 h-56 bg-gradient-to-br from-slate-50 to-indigo-50 rounded-lg relative overflow-hidden shadow-inner">
+                    {/* QR Code Pattern (Static Mockup) */}
+                    <div className="absolute inset-0 grid grid-cols-8 grid-rows-8 gap-1 p-2">
+                      {[...Array(64)].map((_, i) => (
+                        <div
+                          key={i}
+                          className={`${
+                            Math.random() > 0.5 ? 'bg-slate-900' : 'bg-white'
+                          } rounded-sm`}
+                        ></div>
+                      ))}
+                    </div>
+                    {/* Corner Markers */}
+                    <div className="absolute top-2 left-2 w-10 h-10 border-3 border-indigo-600 rounded-md">
+                      <div className="absolute inset-1 border-3 border-indigo-600 rounded-sm"></div>
+                    </div>
+                    <div className="absolute top-2 right-2 w-10 h-10 border-3 border-indigo-600 rounded-md">
+                      <div className="absolute inset-1 border-3 border-indigo-600 rounded-sm"></div>
+                    </div>
+                    <div className="absolute bottom-2 left-2 w-10 h-10 border-3 border-indigo-600 rounded-md">
+                      <div className="absolute inset-1 border-3 border-indigo-600 rounded-sm"></div>
+                    </div>
+                    {/* Scanning Animation Overlay */}
+                    <motion.div
+                      className="absolute top-0 left-0 w-full h-3 bg-indigo-600/40"
+                      animate={{ y: [0, 208, 0] }}
+                      transition={{ repeat: Infinity, duration: 2.5, ease: 'linear' }}
+                    />
+                  </div>
+                  {/* Glowing Effect */}
+                  <div className="absolute -inset-4 bg-indigo-500/20 blur-lg animate-pulse rounded-lg"></div>
+                  <p className="text-slate-800 text-center font-semibold text-sm mt-4">
+                    Scan to Access QRVibe
+                  </p>
+                  <p className="text-slate-600 text-center text-xs mt-1">
+                    Use your smartphone to start the check-in process
+                  </p>
+                </div>
+                {/* Footer */}
+                <div className="bg-slate-50/90 p-3 rounded-b-lg flex justify-center">
+                  <button
+                    onClick={() => navigate('/usage')}
+                    className="text-slate-600 flex items-center text-xs font-medium hover:text-indigo-600 transition-colors"
+                  >
+                    <QrCode className="w-4 h-4 mr-1" />
+                    How to Scan
+                  </button>
+                </div>
+              </div>
+              {/* Decorative Elements */}
+              <div className="absolute -bottom-8 -left-8 w-28 h-28 bg-indigo-600 rounded-full opacity-15 blur-2xl z-0 animate-pulse"></div>
+              <div className="absolute -top-8 -right-8 w-24 h-24 bg-purple-600 rounded-full opacity-15 blur-2xl z-0 animate-pulse"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 rounded-2xl -z-10"></div>
+            </div>
+          </motion.div>
         </div>
-        <div className="absolute bottom-0 left-0 w-full h-2 bg-gradient-to-r from-pink-400 to-purple-400 dark:from-pink-500 dark:to-purple-500 animate-pulse"></div>
       </section>
 
       {/* Features Section */}
-      <section className="py-16 bg-white dark:bg-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-          <h2 className="text-3xl font-bold text-gray-800 dark:text-white text-center mb-12">
+      <section className="relative z-10 py-12 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="text-2xl font-bold text-slate-900 text-center mb-8"
+          >
             Why Choose QRVibe for Visitor Management
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="bg-gray-100 dark:bg-gray-700 p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300">
-              <QrCodeIcon className="w-10 h-10 text-pink-600 dark:text-pink-400 mb-4 mx-auto" />
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white text-center">
-                Secure QR Check-Ins
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 text-center mt-2">
-                Unique QR codes ensure only authorized visitors can check in securely, protecting your workplace.
-              </p>
-            </div>
-            <div className="bg-gray-100 dark:bg-gray-700 p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300">
-              <MapPinIcon className="w-10 h-10 text-pink-600 dark:text-pink-400 mb-4 mx-auto" />
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white text-center">
-                Location Verification
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 text-center mt-2">
-                Validate visitor locations to ensure check-ins occur at designated office premises, enhancing security.
-              </p>
-            </div>
-            <div className="bg-gray-100 dark:bg-gray-700 p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300">
-              <CheckCircleIcon className="w-10 h-10 text-pink-600 dark:text-pink-400 mb-4 mx-auto" />
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white text-center">
-                Instant Digital Passes
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 text-center mt-2">
-                Generate digital visitor passes instantly upon check-in for seamless access control.
-              </p>
-            </div>
-            <div className="bg-gray-100 dark:bg-gray-700 p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300">
-              <DocumentTextIcon className="w-10 h-10 text-pink-600 dark:text-pink-400 mb-4 mx-auto" />
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white text-center">
-                Streamlined Registration
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 text-center mt-2">
-                Easy-to-use forms simplify visitor registration, capturing essential details efficiently.
-              </p>
-            </div>
+          </motion.h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              {
+                icon: <QrCode className="w-8 h-8 text-indigo-600" />,
+                title: "Secure QR Check-Ins",
+                desc: "Unique QR codes ensure only authorized visitors can check in securely, protecting your workplace.",
+              },
+              {
+                icon: <MapPin className="w-8 h-8 text-indigo-600" />,
+                title: "Location Verification",
+                desc: "Validate visitor locations to ensure check-ins occur at designated office premises, enhancing security.",
+              },
+              {
+                icon: <CheckCircle className="w-8 h-8 text-indigo-600" />,
+                title: "Instant Digital Passes",
+                desc: "Generate digital visitor passes instantly upon check-in for seamless access control.",
+              },
+              {
+                icon: <FileText className="w-8 h-8 text-indigo-600" />,
+                title: "Streamlined Registration",
+                desc: "Easy-to-use forms simplify visitor registration, capturing essential details efficiently.",
+              },
+            ].map(({ icon, title, desc }, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: i * 0.1 }}
+                className="group p-5 rounded-lg bg-white border border-slate-100 hover:border-indigo-100 hover:shadow-md transition-all duration-200"
+              >
+                <div className="w-10 h-10 rounded-lg bg-indigo-50 flex items-center justify-center mb-3 group-hover:bg-indigo-100 transition-colors">
+                  {icon}
+                </div>
+                <h3 className="font-semibold text-slate-900 text-center mb-2">{title}</h3>
+                <p className="text-slate-600 text-center">{desc}</p>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* How It Works Section */}
-      <section className="py-16 bg-gradient-to-br from-gray-100 to-gray-300 dark:from-gray-800 dark:to-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-          <h2 className="text-3xl font-bold text-gray-800 dark:text-white text-center mb-12">
+      <section className="relative z-10 py-12 bg-gradient-to-br from-slate-50 to-slate-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="text-2xl font-bold text-slate-900 text-center mb-8"
+          >
             How QRVibe Manages Visitors
-          </h2>
-          <div className="space-y-12">
-            <div className="flex flex-col sm:flex-row items-center gap-6">
-              <div className="flex-shrink-0 bg-pink-100 dark:bg-pink-900/20 rounded-full p-4">
-                <QrCodeIcon className="w-8 h-8 text-pink-600 dark:text-pink-400" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-                  1. Scan the QR Code
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Visitors scan a unique QR code at the office entrance using a smartphone to access the secure check-in form.
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row items-center gap-6">
-              <div className="flex-shrink-0 bg-pink-100 dark:bg-pink-900/20 rounded-full p-4">
-                <MapPinIcon className="w-8 h-8 text-pink-600 dark:text-pink-400" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-                  2. Verify Location
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Enable location services to confirm the visitor is at the designated office location, ensuring secure access.
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row items-center gap-6">
-              <div className="flex-shrink-0 bg-pink-100 dark:bg-pink-900/20 rounded-full p-4">
-                <DocumentTextIcon className="w-8 h-8 text-pink-600 dark:text-pink-400" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-                  3. Complete Registration
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Fill out a user-friendly form with details like name, purpose of visit, and contact information, then submit securely.
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row items-center gap-6">
-              <div className="flex-shrink-0 bg-pink-100 dark:bg-pink-900/20 rounded-full p-4">
-                <CheckCircleIcon className="w-8 h-8 text-pink-600 dark:text-pink-400" />
-              </div>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-white">
-                  4. Receive Digital Pass
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Get an instant digital pass for secure office access or visitor tracking, sent directly to the visitor’s device.
-                </p>
-              </div>
-            </div>
+          </motion.h2>
+          <div className="space-y-10">
+            {[
+              {
+                icon: <QrCode className="w-6 h-6 text-indigo-600" />,
+                title: "1. Scan the QR Code",
+                desc: "Visitors scan a unique QR code at the office entrance using a smartphone to access the secure check-in form.",
+              },
+              {
+                icon: <MapPin className="w-6 h-6 text-indigo-600" />,
+                title: "2. Verify Location",
+                desc: "Enable location services to confirm the visitor is at the designated office location, ensuring secure access.",
+              },
+              {
+                icon: <FileText className="w-6 h-6 text-indigo-600" />,
+                title: "3. Complete Registration",
+                desc: "Fill out a user-friendly form with details like name, purpose of visit, and contact information, then submit securely.",
+              },
+              {
+                icon: <CheckCircle className="w-6 h-6 text-indigo-600" />,
+                title: "4. Receive Digital Pass",
+                desc: "Get an instant digital pass for secure office access or visitor tracking, sent directly to the visitor's device.",
+              },
+            ].map(({ icon, title, desc }, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: i * 0.1 }}
+                className="flex flex-col sm:flex-row items-center gap-5"
+              >
+                <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-indigo-50 flex items-center justify-center group-hover:bg-indigo-100 transition-colors">
+                  {icon}
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-slate-900">{title}</h3>
+                  <p className="text-slate-600">{desc}</p>
+                </div>
+              </motion.div>
+            ))}
           </div>
-          <div className="text-center mt-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
+            className="text-center mt-8"
+          >
             <button
               onClick={() => navigate('/usage')}
-              className="px-6 py-3 bg-pink-600 text-white font-semibold rounded-lg hover:bg-pink-700 transition-colors duration-300 text-[12px] shadow-md hover:scale-105"
+              className="px-5 py-2.5 bg-indigo-500 text-white font-semibold rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-200 shadow-md"
             >
               See Detailed Guide
             </button>
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Benefits Section */}
-      <section className="py-16 bg-white dark:bg-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-          <h2 className="text-3xl font-bold text-gray-800 dark:text-white text-center mb-12">
+      <section className="relative z-10 py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="text-3xl font-bold text-slate-900 text-center mb-12"
+          >
             Benefits of Using QRVibe
-          </h2>
+          </motion.h2>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            <div className="space-y-6">
-              <h3 className="text-xl font-semibold text-gray-800 dark:text-white">
-                For Visitors
-              </h3>
-              <ul className="space-y-4 text-gray-600 dark:text-gray-400">
-                <li className="flex items-start gap-3">
-                  <CheckCircleIcon className="w-6 h-6 text-pink-600 dark:text-pink-400 flex-shrink-0" />
-                  <div>
-                    <span className="font-medium">Fast Check-In</span>: Complete visitor registration in minutes with an intuitive QR-based interface.
-                  </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircleIcon className="w-6 h-6 text-pink-600 dark:text-pink-400 flex-shrink-0" />
-                  <div>
-                    <span className="font-medium">Secure Access</span>: Encrypted QR codes ensure your data is protected during the check-in process.
-                  </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircleIcon className="w-6 h-6 text-pink-600 dark:text-pink-400 flex-shrink-0" />
-                  <div>
-                    <span className="font-medium">Instant Pass</span>: Receive a digital pass immediately for seamless office entry.
-                  </div>
-                </li>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+              className="space-y-6"
+            >
+              <h3 className="text-xl font-semibold text-slate-900">For Visitors</h3>
+              <ul className="space-y-4 text-slate-600">
+                {[
+                  {
+                    title: "Fast Check-In",
+                    desc: "Complete visitor registration in minutes with an intuitive QR-based interface.",
+                  },
+                  {
+                    title: "Secure Access",
+                    desc: "Encrypted QR codes ensure your data is protected during the check-in process.",
+                  },
+                  {
+                    title: "Instant Pass",
+                    desc: "Receive a digital pass immediately for seamless office entry.",
+                  },
+                ].map(({ title, desc }, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <CheckCircle className="w-6 h-6 text-indigo-600 flex-shrink-0" />
+                    <div>
+                      <span className="font-medium text-slate-900">{title}</span>: {desc}
+                    </div>
+                  </li>
+                ))}
               </ul>
-            </div>
-            <div className="space-y-6">
-              <h3 className="text-xl font-semibold text-gray-800 dark:text-white">
-                For Organizations
-              </h3>
-              <ul className="space-y-4 text-gray-600 dark:text-gray-400">
-                <li className="flex items-start gap-3">
-                  <CheckCircleIcon className="w-6 h-6 text-pink-600 dark:text-pink-400 flex-shrink-0" />
-                  <div>
-                    <span className="font-medium">Enhanced Security</span>: Location-based QR validation ensures only authorized visitors enter your premises.
-                  </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircleIcon className="w-6 h-6 text-pink-600 dark:text-pink-400 flex-shrink-0" />
-                  <div>
-                    <span className="font-medium">Efficient Tracking</span>: Monitor visitor data and access history with streamlined digital records.
-                  </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircleIcon className="w-6 h-6 text-pink-600 dark:text-pink-400 flex-shrink-0" />
-                  <div>
-                    <span className="font-medium">Customizable Forms</span>: Tailor registration forms to collect specific visitor information, such as purpose or ID details.
-                  </div>
-                </li>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
+              className="space-y-6"
+            >
+              <h3 className="text-xl font-semibold text-slate-900">For Organizations</h3>
+              <ul className="space-y-4 text-slate-600">
+                {[
+                  {
+                    title: "Enhanced Security",
+                    desc: "Location-based QR validation ensures only authorized visitors enter your premises.",
+                  },
+                  {
+                    title: "Efficient Tracking",
+                    desc: "Monitor visitor data and access history with streamlined digital records.",
+                  },
+                  {
+                    title: "Customizable Forms",
+                    desc: "Tailor registration forms to collect specific visitor information, such as purpose or ID details.",
+                  },
+                ].map(({ title, desc }, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <CheckCircle className="w-6 h-6 text-indigo-600 flex-shrink-0" />
+                    <div>
+                      <span className="font-medium text-slate-900">{title}</span>: {desc}
+                    </div>
+                  </li>
+                ))}
               </ul>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-16 bg-gradient-to-br from-gray-100 to-gray-300 dark:from-gray-800 dark:to-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-          <h2 className="text-3xl font-bold text-gray-800 dark:text-white text-center mb-12">
+      <section className="relative z-10 py-16 bg-gradient-to-br from-slate-50 to-slate-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="text-3xl font-bold text-slate-900 text-center mb-12"
+          >
             What Our Users Say
-          </h2>
+          </motion.h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-              <UsersIcon className="w-8 h-8 text-pink-600 dark:text-pink-400 mb-4 mx-auto" />
-              <p className="text-gray-600 dark:text-gray-400 text-center italic">
-                “QRVibe transformed our visitor management. The QR check-in system is fast, secure, and ensures only authorized visitors enter our office.”
-              </p>
-              <p className="text-gray-800 dark:text-white font-semibold text-center mt-4">
-                Anjali Gupta, Facility Manager
-              </p>
-            </div>
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-              <UsersIcon className="w-8 h-8 text-pink-600 dark:text-pink-400 mb-4 mx-auto" />
-              <p className="text-gray-600 dark:text-gray-400 text-center italic">
-                “Checking in with QRVibe was so simple! I scanned the QR code, filled the form, and got my digital pass in seconds. Highly efficient!”
-              </p>
-              <p className="text-gray-800 dark:text-white font-semibold text-center mt-4">
-                Vikram Singh, Visitor
-              </p>
-            </div>
-            <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md">
-              <UsersIcon className="w-8 h-8 text-pink-600 dark:text-pink-400 mb-4 mx-auto" />
-              <p className="text-gray-600 dark:text-gray-400 text-center italic">
-                “QRVibe’s location verification ensures our office stays secure. The digital pass system simplifies visitor tracking for our team.”
-              </p>
-              <p className="text-gray-800 dark:text-white font-semibold text-center mt-4">
-                Priya Sharma, HR Manager
-              </p>
-            </div>
+            {[
+              {
+                text: "“QRVibe transformed our visitor management. The QR check-in system is fast, secure, and ensures only authorized visitors enter our office.”",
+                author: "Anjali Gupta",
+                role: "Facility Manager",
+              },
+              {
+                text: "“Checking in with QRVibe was so simple! I scanned the QR code, filled the form, and got my digital pass in seconds. Highly efficient!”",
+                author: "Vikram Singh",
+                role: "Visitor",
+              },
+              {
+                text: "“QRVibe's location verification ensures our office stays secure. The digital pass system simplifies visitor tracking for our team.”",
+                author: "Priya Sharma",
+                role: "HR Manager",
+              },
+            ].map(({ text, author, role }, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: i * 0.1 }}
+                className="bg-white p-6 rounded-lg shadow-sm border border-slate-100"
+              >
+                <Users className="w-8 h-8 text-indigo-600 mb-4 mx-auto" />
+                <p className="text-slate-700 mb-4 italic text-center">{text}</p>
+                <div className="text-center">
+                  <div className="font-semibold text-slate-900">{author}</div>
+                  <div className="text-slate-500">{role}</div>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* Contact Form Section for Demo Request */}
-      <section className="py-16 bg-white dark:bg-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-          <h2 className="text-3xl font-bold text-gray-800 dark:text-white text-center mb-12">
+      <section className="relative z-10 py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="text-3xl font-bold text-slate-900 text-center mb-12"
+          >
             Request a Demo
-          </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-400 text-center mb-8 max-w-3xl mx-auto">
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+            className="text-lg text-slate-600 text-center mb-8 max-w-3xl mx-auto"
+          >
             Interested in seeing QRVibe in action? Fill out the form below to request a demo and learn how our QR-based visitor management system can enhance your workplace security and efficiency.
-          </p>
-          <div className="max-w-lg mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6 sm:p-8">
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4, ease: "easeOut" }}
+            className="max-w-lg mx-auto bg-white rounded-lg shadow-md border border-slate-100 p-6 sm:p-8"
+          >
             <form className="space-y-4">
               {/* Name Field */}
               <div className="space-y-1">
-                <label className="flex items-center text-[12px] font-medium text-gray-700 dark:text-gray-300">
-                  <UserIcon className="w-4 h-4 mr-1.5 text-gray-500 dark:text-gray-400" />
-                  Full Name <span className="text-pink-500 ml-1">*</span>
+                <label className="flex items-center text-[12px] font-medium text-slate-700">
+                  <User className="w-4 h-4 mr-1.5 text-slate-500" />
+                  Full Name <span className="text-indigo-600 ml-1">*</span>
                 </label>
                 <input
                   type="text"
                   name="name"
                   required
-                  className="w-full px-3 py-2 text-[12px] rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200"
+                  className="w-full px-3 py-2 text-[12px] rounded-md border border-slate-300 bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
                   placeholder="John Doe"
                   aria-required="true"
                   aria-label="Full Name"
@@ -289,15 +433,15 @@ export default function Home() {
 
               {/* Email Field */}
               <div className="space-y-1">
-                <label className="flex items-center text-[12px] font-medium text-gray-700 dark:text-gray-300">
-                  <EnvelopeIcon className="w-4 h-4 mr-1.5 text-gray-500 dark:text-gray-400" />
-                  Email Address <span className="text-pink-500 ml-1">*</span>
+                <label className="flex items-center text-[12px] font-medium text-slate-700">
+                  <Mail className="w-4 h-4 mr-1.5 text-slate-500" />
+                  Email Address <span className="text-indigo-600 ml-1">*</span>
                 </label>
                 <input
                   type="email"
                   name="email"
                   required
-                  className="w-full px-3 py-2 text-[12px] rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200"
+                  className="w-full px-3 py-2 text-[12px] rounded-md border border-slate-300 bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
                   placeholder="john.doe@example.com"
                   aria-required="true"
                   aria-label="Email Address"
@@ -306,14 +450,14 @@ export default function Home() {
 
               {/* Company Name Field */}
               <div className="space-y-1">
-                <label className="flex items-center text-[12px] font-medium text-gray-700 dark:text-gray-300">
-                  <BuildingOfficeIcon className="w-4 h-4 mr-1.5 text-gray-500 dark:text-gray-400" />
+                <label className="flex items-center text-[12px] font-medium text-slate-700">
+                  <Building2 className="w-4 h-4 mr-1.5 text-slate-500" />
                   Company Name
                 </label>
                 <input
                   type="text"
                   name="company"
-                  className="w-full px-3 py-2 text-[12px] rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200"
+                  className="w-full px-3 py-2 text-[12px] rounded-md border border-slate-300 bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
                   placeholder="Acme Corp"
                   aria-label="Company Name"
                 />
@@ -321,14 +465,14 @@ export default function Home() {
 
               {/* Message Field */}
               <div className="space-y-1">
-                <label className="flex items-center text-[12px] font-medium text-gray-700 dark:text-gray-300">
-                  <DocumentTextIcon className="w-4 h-4 mr-1.5 text-gray-500 dark:text-gray-400" />
+                <label className="flex items-center text-[12px] font-medium text-slate-700">
+                  <FileText className="w-4 h-4 mr-1.5 text-slate-500" />
                   Message
                 </label>
                 <textarea
                   name="message"
                   rows={4}
-                  className="w-full px-3 py-2 text-[12px] rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200"
+                  className="w-full px-3 py-2 text-[12px] rounded-md border border-slate-300 bg-white text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
                   placeholder="Tell us about your needs or how you'd like to use QRVibe..."
                   aria-label="Message"
                 ></textarea>
@@ -338,51 +482,56 @@ export default function Home() {
               <div className="pt-3">
                 <button
                   type="submit"
-                  className="w-full flex items-center justify-center px-4 py-2 text-[12px] font-medium rounded-md bg-pink-600 text-white hover:bg-pink-700 transition-all duration-200 shadow-md hover:scale-105"
+                  className="w-full flex items-center justify-center px-4 py-2 text-[12px] font-medium rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:shadow-lg transform hover:scale-105 transition-all duration-200 shadow-md"
                   aria-label="Submit demo request"
                 >
-                  <CheckCircleIcon className="w-4 h-4 mr-2" />
+                  <CheckCircle className="w-4 h-4 mr-2" />
                   Submit Demo Request
                 </button>
               </div>
             </form>
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-pink-600 dark:bg-pink-700 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 text-center">
+      <section className="relative z-10 py-16 bg-gradient-to-r from-indigo-700 to-purple-700 text-white">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center"
+        >
           <h2 className="text-3xl font-bold mb-4">
             Ready to Transform Visitor Management?
           </h2>
-          <p className="text-lg text-gray-100 dark:text-gray-200 mb-8 max-w-2xl mx-auto">
-            Enhance office security and streamline visitor check-ins with QRVibe’s innovative QR-based platform.
+          <p className="text-lg text-slate-200 mb-8 max-w-2xl mx-auto">
+            Enhance office security and streamline visitor check-ins with QRVibe's innovative QR-based platform.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <button
               onClick={() => navigate('/get-started')}
-              className="px-6 py-3 bg-white text-pink-600 dark:text-pink-400 font-semibold rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-300 text-[12px] shadow-md hover:scale-105"
+              className="px-6 py-3 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 hover:shadow-lg transform hover:scale-105 transition-all duration-200 shadow-md"
             >
               Get Started Now
             </button>
             <button
               onClick={() => navigate('/contact')}
-              className="px-6 py-3 bg-transparent border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-pink-600 dark:hover:text-pink-400 transition-colors duration-300 text-[12px] shadow-md hover:scale-105"
+              className="px-6 py-3 bg-transparent border-2 border-white text-white font-semibold rounded-lg hover:bg-indigo-100 hover:text-indigo-600 hover:border-indigo-100 transition-all duration-200 shadow-md"
             >
               Contact Us
             </button>
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 dark:bg-gray-950 text-gray-300 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+      <footer className="bg-slate-900 text-slate-300 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             <div>
               <h3 className="text-lg font-semibold text-white mb-4">QRVibe</h3>
-              <p className="text-gray-400 text-[12px]">
+              <p className="text-slate-400 text-[12px]">
                 Secure and efficient office visitor management with QR-based technology.
               </p>
             </div>
@@ -400,7 +549,7 @@ export default function Home() {
                   <li key={item.name}>
                     <button
                       onClick={() => navigate(item.path)}
-                      className="text-gray-400 hover:text-pink-400 transition-colors duration-200"
+                      className="text-slate-400 hover:text-indigo-400 transition-colors duration-200"
                     >
                       {item.name}
                     </button>
@@ -410,33 +559,29 @@ export default function Home() {
             </div>
             <div>
               <h3 className="text-lg font-semibold text-white mb-4">Contact</h3>
-              <p className="text-gray-400 text-[12px]">
-                Email: <a href="mailto:support@qrvibe.com" className="hover:text-pink-400 transition-colors duration-200">support@qrvibe.com</a>
+              <p className="text-slate-400 text-[12px]">
+                Email: <a href="mailto:support@qrvibe.com" className="hover:text-indigo-400 transition-colors duration-200">support@qrvibe.com</a>
               </p>
-              <p className="text-gray-400 text-[12px] mt-2">
+              <p className="text-slate-400 text-[12px] mt-2">
                 Phone: +91-123-456-7890
               </p>
             </div>
             <div>
               <h3 className="text-lg font-semibold text-white mb-4">Follow Us</h3>
               <div className="flex space-x-4">
-                <a href="#" className="text-gray-400 hover:text-pink-400 transition-colors duration-200">
+                <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors duration-200">
                   <span className="sr-only">Twitter</span>
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M22 4.01c-1 .49-1.98.689-3 .99-1.121-1.265-2.783-1.335-4.38-.737S11.977 6.323 12 8v1c-3.245.083-6.135-1.395-8-4 0 0-4.182 7.433 4 11-1.872 1.247-3.739 2.088-6 2 4.308 1.784 9.165 1.418 12-1 1.989-.233 3.675-1.384 4-3 0 0 .575-3.375-1-6z" />
-                  </svg>
+                  <Twitter className="w-6 h-6" />
                 </a>
-                <a href="#" className="text-gray-400 hover:text-pink-400 transition-colors duration-200">
+                <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors duration-200">
                   <span className="sr-only">LinkedIn</span>
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M4.98 3.5c0 1.381-1.11 2.5-2.48 2.5s-2.48-1.119-2.48-2.5c0-1.38 1.11-2.5 2.48-2.5s2.48 1.12 2.48 2.5zm.02 4.5h-5v16h5v-16zm7.982 0h-4.968v16h4.969v-8.399c0-4.67 6.029-5.052 6.029 0v8.399h4.988v-10.131c0-7.88-8.922-7.593-11.018-3.714v-2.155z" />
-                  </svg>
+                  <Linkedin className="w-6 h-6" />
                 </a>
               </div>
             </div>
           </div>
-          <div className="mt-8 border-t border-gray-700 pt-6 text-center">
-            <p className="text-gray-400 text-[12px]">
+          <div className="mt-8 border-t border-slate-700 pt-6 text-center">
+            <p className="text-slate-400 text-[12px]">
               © {new Date().getFullYear()} QRVibe. All rights reserved.
             </p>
           </div>

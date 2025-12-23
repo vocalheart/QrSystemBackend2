@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { useContext } from "react";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 import Login from "./components/Login";
 import Signup from "./components/Signaup";
@@ -32,8 +33,14 @@ import ApplicationType from "./ApplicationFeatures/ApplicationType";
 import Members from './members/Members';
 import A4Customizer from './components/A4Customizer';
 import VerifyOtp from "./components/VerifyOtp";
-import  ApplicationStatus      from './ApplicationFeatures/ApplicationStatus'
+import ApplicationStatus from './ApplicationFeatures/ApplicationStatus';
 import Demo from "./components/Demo";
+
+import Hired from './shortlisted-candidates/hire/hire';
+import Blacklist from './shortlisted-candidates/blacklist/blacklist';
+import  Applied from './shortlisted-candidates/applied/applied';
+
+// Layouts
 function ProtectedLayout({ children }) {
   const location = useLocation();
   const hideNavbarRoutes = ["/verify-otp"];
@@ -51,6 +58,7 @@ function PublicLayout({ children }) {
   const location = useLocation();
   const hideNavbarRoutes = ["/login", "/signup", "/reset-password", "/formsubmission"];
   const showNavbar = !hideNavbarRoutes.some(route => location.pathname.startsWith(route));
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-100 to-gray-300 dark:from-gray-800 dark:to-gray-900 text-[12px]">
       {showNavbar && <Navbar />}
@@ -59,15 +67,14 @@ function PublicLayout({ children }) {
   );
 }
 
-// This checks if user is logged in and redirects from "/" to "/dashboard"
+// Home redirect if logged in
 function HomeRedirect() {
   const { user } = useContext(AuthContext);
-  if (user) {
-    return <Navigate to="/dashboard" replace />;
-  }
+  if (user) return <Navigate to="/dashboard" replace />;
   return <Home />;
 }
 
+// App routes
 function AppContent() {
   return (
     <Routes>
@@ -83,7 +90,8 @@ function AppContent() {
       <Route path="/reset-password" element={<PublicLayout><ResetPassword /></PublicLayout>} />
       <Route path="/formsubmission/:id?" element={<PublicLayout><QRForm /></PublicLayout>} />
       <Route path="/application-list" element={<PublicLayout><ApplicationType /></PublicLayout>} />
-      <Route path="/demo" element={<PublicLayout><Demo/></PublicLayout>}/>
+      <Route path="/demo" element={<PublicLayout><Demo /></PublicLayout>} />
+      
       {/* Protected Routes */}
       <Route path="/verify-otp" element={<ProtectedRoute><ProtectedLayout><VerifyOtp /></ProtectedLayout></ProtectedRoute>} />
       <Route path="/all" element={<ProtectedRoute><ProtectedLayout><AllF /></ProtectedLayout></ProtectedRoute>} />
@@ -98,9 +106,13 @@ function AppContent() {
       <Route path="/profile" element={<ProtectedRoute><ProtectedLayout><Profile /></ProtectedLayout></ProtectedRoute>} />
       <Route path="/settings" element={<ProtectedRoute><ProtectedLayout><Setting /></ProtectedLayout></ProtectedRoute>} />
       <Route path="/members" element={<ProtectedRoute><ProtectedLayout><Members /></ProtectedLayout></ProtectedRoute>} />
-      <Route path="/status" element={<ProtectedRoute><ProtectedLayout><ApplicationStatus/></ProtectedLayout></ProtectedRoute>} />
+      <Route path="/status" element={<ProtectedRoute><ProtectedLayout><ApplicationStatus /></ProtectedLayout></ProtectedRoute>} />
       <Route path="/a4-customizer/:qrCode" element={<ProtectedRoute><ProtectedLayout><A4Customizer /></ProtectedLayout></ProtectedRoute>} />
-      {/* Coming Soon Routes */}
+      
+       <Route path="/shortlisted-candidates/applied"  element={<ProtectedRoute><ProtectedLayout><Applied/></ProtectedLayout></ProtectedRoute>} />
+       <Route path="/shortlisted-candidates/hired"  element={<ProtectedRoute><ProtectedLayout><Hired/></ProtectedLayout></ProtectedRoute>} />
+       <Route path="/shortlisted-candidates/blacklist"  element={<ProtectedRoute><ProtectedLayout><Blacklist/></ProtectedLayout></ProtectedRoute>} />
+      {/* Coming Soon Pages */}
       <Route path="/interview" element={<ProtectedRoute><ProtectedLayout>
         <div className="max-w-7xl mx-auto px-4 py-8 text-center">
           <h1 className="font-semibold text-gray-900 dark:text-white text-[12px]">Interview Management</h1>
@@ -114,6 +126,7 @@ function AppContent() {
           </div>
         </div>
       </ProtectedLayout></ProtectedRoute>} />
+      
       <Route path="/forvistis" element={<ProtectedRoute><ProtectedLayout>
         <div className="max-w-7xl mx-auto px-4 py-8 text-center">
           <h1 className="font-semibold text-gray-900 dark:text-white text-[12px]">Visitor Management</h1>
@@ -131,17 +144,20 @@ function AppContent() {
   );
 }
 
+// Main App
 function App() {
   return (
-    <AuthProvider>
-      <CartProvider>
-        <NotificationProvider>
-          <BrowserRouter>
-            <AppContent />
-          </BrowserRouter>
-        </NotificationProvider>
-      </CartProvider>
-    </AuthProvider>
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+      <AuthProvider>
+        <CartProvider>
+          <NotificationProvider>
+            <BrowserRouter>
+              <AppContent />
+            </BrowserRouter>
+          </NotificationProvider>
+        </CartProvider>
+      </AuthProvider>
+    </GoogleOAuthProvider>
   );
 }
 

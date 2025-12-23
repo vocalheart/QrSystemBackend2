@@ -1,58 +1,160 @@
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
-  QrCodeIcon,
-  MapPinIcon,
-  DocumentTextIcon,
-  CheckCircleIcon,
-  InformationCircleIcon,
-  EnvelopeIcon,
-  ExclamationTriangleIcon,
-} from '@heroicons/react/24/outline';
+  QrCode,
+  MapPin,
+  FileText,
+  CheckCircle,
+  Info,
+  Mail,
+  AlertTriangle,
+  Twitter,
+  Linkedin,
+} from 'lucide-react';
 
 export default function Usage() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-300 dark:from-gray-800 dark:to-gray-900 text-[12px]">
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-r from-pink-500 to-purple-500 dark:from-pink-600 dark:to-purple-600 text-white py-16 sm:py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 text-center">
-          <h1 className="text-4xl sm:text-5xl font-bold mb-4 animate-fade-in">
-            How to Use QRVibe
-          </h1>
-          <p className="text-lg sm:text-xl text-gray-100 dark:text-gray-200 mb-8 max-w-3xl mx-auto">
-            Your secure, QR-based platform for streamlined office visitor management and access control.
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <button
-              onClick={() => navigate('/get-started')}
-              className="px-6 py-3 bg-white text-pink-600 dark:text-pink-400 font-semibold rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-300 text-[12px] shadow-md hover:scale-105"
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-slate-100 text-slate-900 font-[Inter] text-[12px]">
+      {/* Hero Section with QR Code Display */}
+      <section className="relative bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-16 sm:py-24">
+        <div className="absolute -top-32 -left-32 w-64 h-64 rounded-full bg-gradient-to-r from-indigo-400 to-purple-400 opacity-20 blur-3xl animate-pulse z-0" />
+        <div className="absolute bottom-8 right-8 w-80 h-80 rounded-full bg-gradient-to-r from-purple-300 to-indigo-300 opacity-20 blur-3xl animate-pulse z-0" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center gap-8">
+          <div className="flex-1 text-center md:text-left">
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: 'easeOut' }}
+              className="text-4xl sm:text-5xl font-bold mb-4"
             >
-              Get Started
-            </button>
-            <button
-              onClick={() => navigate('/')}
-              className="px-6 py-3 bg-transparent border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-pink-600 dark:hover:text-pink-400 transition-colors duration-300 text-[12px] shadow-md hover:scale-105"
+              How to Use QRVibe
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2, ease: 'easeOut' }}
+              className="text-lg sm:text-xl text-slate-200 mb-8 max-w-3xl mx-auto md:mx-0"
             >
-              Back to Home
-            </button>
+              Your secure, QR-based platform for streamlined office visitor management and access control.
+            </motion.p>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4, ease: 'easeOut' }}
+              className="flex flex-col sm:flex-row justify-center md:justify-start gap-4"
+            >
+              <button
+                onClick={() => navigate('/get-started')}
+                className="px-6 py-3 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 hover:shadow-lg transform hover:scale-105 transition-all duration-200 shadow-md"
+              >
+                Get Started
+              </button>
+              <button
+                onClick={() => navigate('/')}
+                className="px-6 py-3 bg-transparent border-2 border-white text-white font-semibold rounded-lg hover:bg-indigo-100 hover:text-indigo-600 hover:border-indigo-100 transition-all duration-200 shadow-md"
+              >
+                Back to Home
+              </button>
+            </motion.div>
           </div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.7, delay: 0.3 }}
+            className="flex-1 flex justify-center mt-6 md:mt-0"
+          >
+            <div className="relative max-w-xs mx-auto">
+              {/* QR Code Display Frame */}
+              <div className="relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-4 shadow-2xl border-2 border-slate-900 overflow-hidden">
+                {/* Header */}
+                <div className="bg-indigo-600 text-white p-3 rounded-t-lg text-center font-semibold text-sm flex items-center justify-between">
+                  <span className="flex items-center">
+                    <QrCode className="w-5 h-5 mr-2" />
+                    QRVibe Code
+                  </span>
+                  <div className="flex gap-2">
+                    <div className="w-2 h-2 rounded-full bg-white/30 animate-pulse"></div>
+                    <div className="w-2 h-2 rounded-full bg-white/30 animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                  </div>
+                </div>
+                {/* QR Code Area */}
+                <div className="bg-white rounded-lg p-6 flex flex-col items-center justify-center relative">
+                  {/* Mock QR Code */}
+                  <div className="w-48 h-48 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-lg relative overflow-hidden shadow-inner">
+                    {/* QR Code Pattern (Static Mockup) */}
+                    <div className="absolute inset-0 grid grid-cols-6 grid-rows-6 gap-1 p-2">
+                      {[...Array(36)].map((_, i) => (
+                        <div
+                          key={i}
+                          className={`${
+                            Math.random() > 0.5 ? 'bg-slate-900' : 'bg-white'
+                          } rounded-sm`}
+                        ></div>
+                      ))}
+                    </div>
+                    {/* Corner Markers */}
+                    <div className="absolute top-2 left-2 w-8 h-8 border-2 border-slate-900 rounded-sm">
+                      <div className="absolute inset-1 border-2 border-slate-900 rounded-sm"></div>
+                    </div>
+                    <div className="absolute top-2 right-2 w-8 h-8 border-2 border-slate-900 rounded-sm">
+                      <div className="absolute inset-1 border-2 border-slate-900 rounded-sm"></div>
+                    </div>
+                    <div className="absolute bottom-2 left-2 w-8 h-8 border-2 border-slate-900 rounded-sm">
+                      <div className="absolute inset-1 border-2 border-slate-900 rounded-sm"></div>
+                    </div>
+                    {/* Scanning Animation Overlay */}
+                    <motion.div
+                      className="absolute top-0 left-0 w-full h-2 bg-indigo-500/50"
+                      animate={{ y: [0, 176, 0] }}
+                      transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
+                    />
+                  </div>
+                  {/* Glowing Effect */}
+                  <div className="absolute -inset-4 bg-indigo-400/20 blur-md animate-pulse rounded-lg"></div>
+                  <p className="text-slate-800 text-center font-semibold text-sm mt-4">
+                    Scan this QR Code to Begin
+                  </p>
+                  <p className="text-slate-600 text-center text-xs mt-1">
+                    Use your device’s camera to access the check-in form
+                  </p>
+                </div>
+                {/* Footer */}
+                <div className="bg-slate-50/80 p-3 rounded-b-lg flex justify-center">
+                  <button className="text-slate-600 flex items-center text-xs font-medium hover:text-indigo-600 transition-colors">
+                    <Info className="w-4 h-4 mr-1" />
+                    Learn More
+                  </button>
+                </div>
+              </div>
+              {/* Decorative Elements */}
+              <div className="absolute -bottom-6 -left-6 w-24 h-24 bg-indigo-500 rounded-full opacity-10 blur-2xl z-0 animate-pulse"></div>
+              <div className="absolute -top-6 -right-6 w-20 h-20 bg-purple-500 rounded-full opacity-10 blur-2xl z-0 animate-pulse"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-indigo-400/10 to-purple-400/10 rounded-2xl -z-10"></div>
+            </div>
+          </motion.div>
         </div>
-        <div className="absolute bottom-0 left-0 w-full h-2 bg-gradient-to-r from-pink-400 to-purple-400 dark:from-pink-500 dark:to-purple-500 animate-pulse"></div>
+        <div className="absolute bottom-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 to-purple-500 animate-pulse"></div>
       </section>
 
       {/* Main Content */}
-      <section className="py-16 bg-white dark:bg-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+      <section className="py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Introduction */}
-          <div className="mb-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+            className="mb-12"
+          >
             <div className="flex items-center gap-3 mb-6">
-              <InformationCircleIcon className="w-6 h-6 text-pink-600 dark:text-pink-400" />
-              <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">
+              <Info className="w-6 h-6 text-indigo-600" />
+              <h2 className="text-2xl font-semibold text-slate-900">
                 Welcome to QRVibe
               </h2>
             </div>
-            <div className="space-y-4 text-gray-600 dark:text-gray-400">
+            <div className="space-y-4 text-slate-600">
               <p>
                 QRVibe is a cutting-edge platform designed to streamline and secure office visitor management. Using QR codes and location-based validation, QRVibe ensures only authorized visitors gain access to your workplace.
               </p>
@@ -60,17 +162,22 @@ export default function Usage() {
                 Whether you're a visitor checking in for a meeting or an organization managing access, QRVibe offers a seamless, secure, and efficient experience. Our platform leverages advanced geolocation technology to verify visitors are at the correct office location before granting access.
               </p>
             </div>
-          </div>
+          </motion.div>
 
           {/* Prerequisites */}
-          <div className="mb-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1, ease: 'easeOut' }}
+            className="mb-12"
+          >
             <div className="flex items-center gap-3 mb-6">
-              <InformationCircleIcon className="w-6 h-6 text-pink-600 dark:text-pink-400" />
-              <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">
+              <Info className="w-6 h-6 text-indigo-600" />
+              <h2 className="text-2xl font-semibold text-slate-900">
                 Before You Begin
               </h2>
             </div>
-            <div className="space-y-4 text-gray-600 dark:text-gray-400">
+            <div className="space-y-4 text-slate-600">
               <p>To ensure a smooth visitor check-in process with QRVibe, prepare the following:</p>
               <ul className="list-disc list-inside space-y-2 pl-4">
                 <li>
@@ -87,29 +194,39 @@ export default function Usage() {
                 </li>
               </ul>
             </div>
-          </div>
+          </motion.div>
 
           {/* Step-by-Step Guide */}
-          <div className="mb-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2, ease: 'easeOut' }}
+            className="mb-12"
+          >
             <div className="flex items-center gap-3 mb-6">
-              <InformationCircleIcon className="w-6 h-6 text-pink-600 dark:text-pink-400" />
-              <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">
+              <Info className="w-6 h-6 text-indigo-600" />
+              <h2 className="text-2xl font-semibold text-slate-900">
                 Step-by-Step Instructions
               </h2>
             </div>
 
             <div className="space-y-8">
               {/* Step 1 */}
-              <div className="bg-gray-50 dark:bg-gray-700/30 p-6 rounded-xl shadow-md">
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                className="bg-white border border-slate-100 rounded-lg p-6 shadow-sm hover:shadow-md transition-all duration-200"
+              >
                 <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 bg-pink-100 dark:bg-pink-900/20 rounded-full p-3">
-                    <QrCodeIcon className="w-6 h-6 text-pink-600 dark:text-pink-400" />
+                  <div className="flex-shrink-0 bg-indigo-50 rounded-full p-3">
+                    <QrCode className="w-6 h-6 text-indigo-600" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">
+                    <h3 className="text-xl font-semibold text-slate-900 mb-3">
                       1. Scan the QR Code
                     </h3>
-                    <div className="space-y-3 text-gray-600 dark:text-gray-400">
+                    <div className="space-y-3 text-slate-600">
                       <p>Begin by scanning the unique QR code provided by the office reception or host.</p>
                       <p className="font-medium">How to Scan the QR Code:</p>
                       <ol className="list-decimal list-inside space-y-2 pl-4">
@@ -120,19 +237,24 @@ export default function Usage() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
 
               {/* Step 2 */}
-              <div className="bg-gray-50 dark:bg-gray-700/30 p-6 rounded-xl shadow-md">
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.1 }}
+                className="bg-white border border-slate-100 rounded-lg p-6 shadow-sm hover:shadow-md transition-all duration-200"
+              >
                 <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 bg-pink-100 dark:bg-pink-900/20 rounded-full p-3">
-                    <MapPinIcon className="w-6 h-6 text-pink-600 dark:text-pink-400" />
+                  <div className="flex-shrink-0 bg-indigo-50 rounded-full p-3">
+                    <MapPin className="w-6 h-6 text-indigo-600" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">
+                    <h3 className="text-xl font-semibold text-slate-900 mb-3">
                       2. Allow Location Access
                     </h3>
-                    <div className="space-y-3 text-gray-600 dark:text-gray-400">
+                    <div className="space-y-3 text-slate-600">
                       <p>After scanning, QRVibe will request access to your device’s location to verify you’re at the office.</p>
                       <p className="font-medium">How to Allow Location Access:</p>
                       <ol className="list-decimal list-inside space-y-2 pl-4">
@@ -143,19 +265,24 @@ export default function Usage() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
 
               {/* Step 3 */}
-              <div className="bg-gray-50 dark:bg-gray-700/30 p-6 rounded-xl shadow-md">
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.2 }}
+                className="bg-white border border-slate-100 rounded-lg p-6 shadow-sm hover:shadow-md transition-all duration-200"
+              >
                 <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 bg-pink-100 dark:bg-pink-900/20 rounded-full p-3">
-                    <DocumentTextIcon className="w-6 h-6 text-pink-600 dark:text-pink-400" />
+                  <div className="flex-shrink-0 bg-indigo-50 rounded-full p-3">
+                    <FileText className="w-6 h-6 text-indigo-600" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">
+                    <h3 className="text-xl font-semibold text-slate-900 mb-3">
                       3. Complete the Check-In Form
                     </h3>
-                    <div className="space-y-3 text-gray-600 dark:text-gray-400">
+                    <div className="space-y-3 text-slate-600">
                       <p>Once your location is verified, fill out the visitor check-in form.</p>
                       <p className="font-medium">Form Fields Explained:</p>
                       <ul className="list-disc list-inside space-y-2 pl-4">
@@ -167,19 +294,24 @@ export default function Usage() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
 
               {/* Step 4 */}
-              <div className="bg-gray-50 dark:bg-gray-700/30 p-6 rounded-xl shadow-md">
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.3 }}
+                className="bg-white border border-slate-100 rounded-lg p-6 shadow-sm hover:shadow-md transition-all duration-200"
+              >
                 <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 bg-pink-100 dark:bg-pink-900/20 rounded-full p-3">
-                    <CheckCircleIcon className="w-6 h-6 text-pink-600 dark:text-pink-400" />
+                  <div className="flex-shrink-0 bg-indigo-50 rounded-full p-3">
+                    <CheckCircle className="w-6 h-6 text-indigo-600" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">
+                    <h3 className="text-xl font-semibold text-slate-900 mb-3">
                       4. Submit and Receive Your Digital Pass
                     </h3>
-                    <div className="space-y-3 text-gray-600 dark:text-gray-400">
+                    <div className="space-y-3 text-slate-600">
                       <p>Submit the form to receive your digital visitor pass instantly.</p>
                       <p className="font-medium">What the Digital Pass Does:</p>
                       <ul className="list-disc list-inside space-y-2 pl-4">
@@ -190,141 +322,160 @@ export default function Usage() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Troubleshooting */}
-          <div className="mb-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3, ease: 'easeOut' }}
+            className="mb-12"
+          >
             <div className="flex items-center gap-3 mb-6">
-              <ExclamationTriangleIcon className="w-6 h-6 text-pink-600 dark:text-pink-400" />
-              <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">
+              <AlertTriangle className="w-6 h-6 text-indigo-600" />
+              <h2 className="text-2xl font-semibold text-slate-900">
                 Troubleshooting Common Issues
               </h2>
             </div>
             <div className="space-y-4">
-              <div className="bg-red-50 dark:bg-red-900/10 p-6 rounded-xl">
-                <p className="font-medium text-red-600 dark:text-red-400 mb-2">
+              <div className="bg-red-50 p-6 rounded-lg">
+                <p className="font-medium text-red-600 mb-2">
                   "Unable to Retrieve Location" Error
                 </p>
-                <ul className="list-disc list-inside space-y-1 text-gray-600 dark:text-gray-400 pl-4">
+                <ul className="list-disc list-inside space-y-1 text-slate-600 pl-4">
                   <li>Refresh the page and select “Allow” for location access.</li>
                   <li>Verify that location services are enabled in your device settings.</li>
                 </ul>
               </div>
-              <div className="bg-yellow-50 dark:bg-yellow-900/10 p-6 rounded-xl">
-                <p className="font-medium text-yellow-600 dark:text-yellow-400 mb-2">
+              <div className="bg-yellow-50 p-6 rounded-lg">
+                <p className="font-medium text-yellow-600 mb-2">
                   "You Are Not Within the Allowed Range" Error
                 </p>
-                <ul className="list-disc list-inside space-y-1 text-gray-600 dark:text-gray-400 pl-4">
+                <ul className="list-disc list-inside space-y-1 text-slate-600 pl-4">
                   <li>Ensure you are at the designated office location.</li>
                   <li>Confirm the QR code’s location requirements with the office reception.</li>
                 </ul>
               </div>
-              <div className="bg-blue-50 dark:bg-blue-900/10 p-6 rounded-xl">
-                <p className="font-medium text-blue-600 dark:text-blue-400 mb-2">
+              <div className="bg-blue-50 p-6 rounded-lg">
+                <p className="font-medium text-blue-600 mb-2">
                   "Failed to Submit Form" Error
                 </p>
-                <ul className="list-disc list-inside space-y-1 text-gray-600 dark:text-gray-400 pl-4">
+                <ul className="list-disc list-inside space-y-1 text-slate-600 pl-4">
                   <li>Verify all required fields (e.g., name, email) are completed.</li>
                   <li>Ensure your internet connection is stable.</li>
                 </ul>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* FAQs */}
-          <div className="mb-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4, ease: 'easeOut' }}
+            className="mb-12"
+          >
             <div className="flex items-center gap-3 mb-6">
-              <InformationCircleIcon className="w-6 h-6 text-pink-600 dark:text-pink-400" />
-              <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">
+              <Info className="w-6 h-6 text-indigo-600" />
+              <h2 className="text-2xl font-semibold text-slate-900">
                 Frequently Asked Questions
               </h2>
             </div>
             <div className="space-y-6">
-              <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
-                <p className="font-medium text-gray-800 dark:text-white">
+              <div className="border-b border-slate-200 pb-4">
+                <p className="font-medium text-slate-900">
                   Q: Do I need an account to use QRVibe for visitor check-in?
                 </p>
-                <p className="text-gray-600 dark:text-gray-400 mt-2">
+                <p className="text-slate-600 mt-2">
                   No, QRVibe’s check-in process is account-free and accessible via QR code.
                 </p>
               </div>
-              <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
-                <p className="font-medium text-gray-800 dark:text-white">
+              <div className="border-b border-slate-200 pb-4">
+                <p className="font-medium text-slate-900">
                   Q: What if I’m not at the office location?
                 </p>
-                <p className="text-gray-600 dark:text-gray-400 mt-2">
+                <p className="text-slate-600 mt-2">
                   You’ll receive an “Access Denied” message and cannot submit the form until you’re at the correct location.
                 </p>
               </div>
-              <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
-                <p className="font-medium text-gray-800 dark:text-white">
+              <div className="border-b border-slate-200 pb-4">
+                <p className="font-medium text-slate-900">
                   Q: Can I reuse the same QR code for multiple visits?
                 </p>
-                <p className="text-gray-600 dark:text-gray-400 mt-2">
+                <p className="text-slate-600 mt-2">
                   QR codes are typically single-use for security. Contact the office for a new QR code for each visit.
                 </p>
               </div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Contact Support */}
-          <div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.5, ease: 'easeOut' }}
+          >
             <div className="flex items-center gap-3 mb-6">
-              <EnvelopeIcon className="w-6 h-6 text-pink-600 dark:text-pink-400" />
-              <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">
+              <Mail className="w-6 h-6 text-indigo-600" />
+              <h2 className="text-2xl font-semibold text-slate-900">
                 Contact QRVibe Support
               </h2>
             </div>
-            <div className="space-y-4 text-gray-600 dark:text-gray-400">
+            <div className="space-y-4 text-slate-600">
               <p>Need assistance with QRVibe? Our support team is ready to help with any issues or questions.</p>
               <ul className="list-disc list-inside space-y-2 pl-4">
                 <li>
-                  <span className="font-medium">Email</span>: <a href="mailto:support@qrvibe.com" className="hover:text-pink-400 transition-colors duration-200">support@qrvibe.com</a>
+                  <span className="font-medium">Email</span>: <a href="mailto:support@qrvibe.com" className="hover:text-indigo-600 transition-colors duration-200">support@qrvibe.com</a>
                 </li>
                 <li>
                   <span className="font-medium">Response Time</span>: Within 24 hours on business days
                 </li>
               </ul>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-pink-600 dark:bg-pink-700 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 text-center">
+      <section className="py-16 bg-gradient-to-r from-indigo-700 to-purple-700 text-white">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center"
+        >
           <h2 className="text-3xl font-bold mb-4">
             Ready to Streamline Visitor Management?
           </h2>
-          <p className="text-lg text-gray-100 dark:text-gray-200 mb-8 max-w-2xl mx-auto">
+          <p className="text-lg text-slate-200 mb-8 max-w-2xl mx-auto">
             Experience secure and efficient office check-ins with QRVibe’s innovative platform.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <button
               onClick={() => navigate('/get-started')}
-              className="px-6 py-3 bg-white text-pink-600 dark:text-pink-400 font-semibold rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-300 text-[12px] shadow-md hover:scale-105"
+              className="px-6 py-3 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 hover:shadow-lg transform hover:scale-105 transition-all duration-200 shadow-md"
             >
               Get Started Now
             </button>
             <button
               onClick={() => navigate('/contact')}
-              className="px-6 py-3 bg-transparent border-2 border-white text-white font-semibold rounded-lg hover:bg-white hover:text-pink-600 dark:hover:text-pink-400 transition-colors duration-300 text-[12px] shadow-md hover:scale-105"
+              className="px-6 py-3 bg-transparent border-2 border-white text-white font-semibold rounded-lg hover:bg-indigo-100 hover:text-indigo-600 hover:border-indigo-100 transition-all duration-200 shadow-md"
             >
               Contact Support
             </button>
           </div>
-        </div>
+        </motion.div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 dark:bg-gray-950 text-gray-300 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+      <footer className="bg-slate-900 text-slate-300 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             <div>
               <h3 className="text-lg font-semibold text-white mb-4">QRVibe</h3>
-              <p className="text-gray-400 text-[12px]">
+              <p className="text-slate-400 text-[12px]">
                 Secure, QR-based solutions for efficient office visitor management.
               </p>
             </div>
@@ -342,7 +493,7 @@ export default function Usage() {
                   <li key={item.name}>
                     <button
                       onClick={() => navigate(item.path)}
-                      className="text-gray-400 hover:text-pink-400 transition-colors duration-200"
+                      className="text-slate-400 hover:text-indigo-400 transition-colors duration-200"
                     >
                       {item.name}
                     </button>
@@ -361,7 +512,7 @@ export default function Usage() {
                   <li key={item.name}>
                     <button
                       onClick={() => navigate(item.path)}
-                      className="text-gray-400 hover:text-pink-400 transition-colors duration-200"
+                      className="text-slate-400 hover:text-indigo-400 transition-colors duration-200"
                     >
                       {item.name}
                     </button>
@@ -371,30 +522,26 @@ export default function Usage() {
             </div>
             <div>
               <h3 className="text-lg font-semibold text-white mb-4">Connect</h3>
-              <p className="text-gray-400 text-[12px] mb-2">
-                <EnvelopeIcon className="w-4 h-4 inline mr-2" />
-                <a href="mailto:support@qrvibe.com" className="hover:text-pink-400 transition-colors duration-200">
+              <p className="text-slate-400 text-[12px] mb-2">
+                <Mail className="w-4 h-4 inline mr-2" />
+                <a href="mailto:support@qrvibe.com" className="hover:text-indigo-400 transition-colors duration-200">
                   support@qrvibe.com
                 </a>
               </p>
               <div className="flex space-x-4 mt-4">
-                <a href="#" className="text-gray-400 hover:text-pink-400 transition-colors duration-200">
+                <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors duration-200">
+                  <Twitter className="w-5 h-5" />
                   <span className="sr-only">Twitter</span>
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M22 4.01c-1 .49-1.98.689-3 .99-1.121-1.265-2.783-1.335-4.38-.737S11.977 6.323 12 8v1c-3.245.083-6.135-1.395-8-4 0 0-4.182 7.433 4 11-1.872 1.247-3.739 2.088-6 2 4.308 1.784 9.165 1.418 12-1 1.989-.233 3.675-1.384 4-3 0 0 .575-3.375-1-6z" />
-                  </svg>
                 </a>
-                <a href="#" className="text-gray-400 hover:text-pink-400 transition-colors duration-200">
+                <a href="#" className="text-slate-400 hover:text-indigo-400 transition-colors duration-200">
+                  <Linkedin className="w-5 h-5" />
                   <span className="sr-only">LinkedIn</span>
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M4.98 3.5c0 1.381-1.11 2.5-2.48 2.5s-2.48-1.119-2.48-2.5c0-1.38 1.11-2.5 2.48-2.5s2.48 1.12 2.48 2.5zm.02 4.5h-5v16h5v-16zm7.982 0h-4.968v16h4.969v-8.399c0-4.67 6.029-5.052 6.029 0v8.399h4.988v-10.131c0-7.88-8.922-7.593-11.018-3.714v-2.155z" />
-                  </svg>
                 </a>
               </div>
             </div>
           </div>
-          <div className="mt-8 border-t border-gray-700 pt-6 text-center">
-            <p className="text-gray-400 text-[12px]">
+          <div className="mt-8 border-t border-slate-700 pt-6 text-center">
+            <p className="text-slate-400 text-[12px]">
               © {new Date().getFullYear()} QRVibe Technologies. All rights reserved.
             </p>
           </div>

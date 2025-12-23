@@ -4,16 +4,17 @@ import axios from 'axios';
 import toast, { Toaster } from 'react-hot-toast';
 import { CartContext } from '../Contex/NotificationConterContex.jsx';
 import {
-  XMarkIcon,
-  PaperAirplaneIcon,
-  DocumentArrowUpIcon,
-  MapPinIcon,
-  UserIcon,
-  EnvelopeIcon,
-  ExclamationTriangleIcon,
-  CheckCircleIcon,
-  XCircleIcon,
-} from '@heroicons/react/24/outline';
+  X,
+  Send,
+  FileUp,
+  MapPin,
+  User,
+  Mail,
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  Phone,
+} from 'lucide-react';
 import ApiLoader from '../Loader/ApiLoader';
 
 export default function QRForm() {
@@ -26,6 +27,7 @@ export default function QRForm() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    number: '',
     reason: '',
     application_type: '',
     resume: null,
@@ -186,24 +188,24 @@ export default function QRForm() {
   const showErrorToast = (message) => {
     toast.error(message, {
       style: {
-        background: '#FEE2E2',
-        color: '#B91C1C',
-        border: '1px solid #FECACA',
+        background: '#fee2e2',
+        color: '#b91c1c',
+        border: '1px solid #fecaca',
         fontSize: '12px',
       },
-      icon: <XCircleIcon className="h-4 w-4 text-red-500" />,
+      icon: <XCircle className="h-4 w-4 text-red-800" />,
     });
   };
 
   const showSuccessToast = (message) => {
     toast.success(message, {
       style: {
-        background: '#D1FAE5',
-        color: '#065F46',
-        border: '1px solid #A7F3D0',
+        background: '#d1fae5',
+        color: '#065f46',
+        border: '1px solid #a7f3d0',
         fontSize: '12px',
       },
-      icon: <CheckCircleIcon className="h-4 w-4 text-green-500" />,
+      icon: <CheckCircle className="h-4 w-4 text-green-800" />,
     });
   };
 
@@ -238,10 +240,11 @@ export default function QRForm() {
   };
 
   const isFormValid = () => {
-    const { name, email, application_type } = formData;
+    const { name, email, number, application_type } = formData;
     const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    const phoneValid = /^[0-9]{10}$/.test(number); // Assuming 10-digit phone number validation
 
-    return name.trim() && emailValid && application_type.trim() && applicationTypes.length > 0;
+    return name.trim() && emailValid && phoneValid && application_type.trim() && applicationTypes.length > 0;
   };
 
   const handleSubmit = async (e) => {
@@ -268,6 +271,7 @@ export default function QRForm() {
       const form = new FormData();
       form.append('name', formData.name);
       form.append('email', formData.email);
+      form.append('number', formData.number);
       form.append('reason', formData.reason);
       form.append('application_type', formData.application_type);
 
@@ -290,6 +294,7 @@ export default function QRForm() {
       setFormData({
         name: '',
         email: '',
+        number: '',
         reason: '',
         application_type: applicationTypes[0]?.name || '',
         resume: null,
@@ -318,14 +323,14 @@ export default function QRForm() {
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4 sm:p-6 font-roboto text-[12px] antialiased">
+      <div className="min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8 py-10 sm:py-12 flex items-center justify-center text-xs font-roboto antialiased">
         <div className="flex flex-col items-center gap-4">
           <ApiLoader />
           <div className="text-center space-y-2">
-            <p className="text-gray-700 dark:text-gray-300 font-medium">
+            <p className="text-gray-800 font-medium text-xs">
               Loading form and checking requirements
             </p>
-            <p className="text-[12px] text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-gray-600">
               Please ensure location services are enabled if prompted
             </p>
           </div>
@@ -337,20 +342,20 @@ export default function QRForm() {
   // Location error or validation failed state
   if (requiresLocation && (locationError || withinRange === false || withinRange === null)) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4 sm:p-6 font-roboto text-[12px] antialiased">
-        <div className="max-w-md w-full bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 text-center space-y-4">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full">
-            <ExclamationTriangleIcon className="w-6 h-6 text-red-500 dark:text-red-400" />
+      <div className="min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8 py-10 sm:py-12 flex items-center justify-center text-xs font-roboto antialiased">
+        <div className="max-w-md w-full bg-white p-6 sm:p-8 rounded-md shadow-sm border border-gray-200 text-center space-y-4">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-red-100 rounded-full">
+            <AlertTriangle className="w-6 h-6 text-red-600" />
           </div>
           <div className="space-y-2">
-            <h2 className="text-[14px] font-bold text-gray-900 dark:text-white">
+            <h2 className="text-[14px] font-semibold text-gray-800">
               {locationLoading ? 'Verifying Location...' : 'Location Verification Required'}
             </h2>
-            <p className="text-[12px] text-gray-600 dark:text-gray-400" id="location-error">
+            <p className="text-xs text-gray-600" id="location-error">
               {locationError || 'We need to verify your location to submit this form.'}
             </p>
             {locationError?.includes('denied') && (
-              <p className="text-[12px] text-gray-500 dark:text-gray-400 mt-2">
+              <p className="text-xs text-gray-600 mt-2">
                 To enable location access:<br />
                 - Chrome: Settings &gt; Privacy and security &gt; Site settings &gt; Location<br />
                 - Firefox: about:preferences#privacy &gt; Permissions &gt; Location<br />
@@ -363,23 +368,23 @@ export default function QRForm() {
             <button
               onClick={handleRetryLocation}
               disabled={locationLoading}
-              className={`flex items-center justify-center px-4 py-2 text-[12px] font-medium rounded-md transition-all duration-200 ${
+              className={`flex items-center justify-center px-4 py-2 text-xs font-medium rounded-md transition-all duration-200 ${
                 locationLoading
-                  ? 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                  : 'bg-pink-600 hover:bg-pink-700 text-white shadow-sm'
+                  ? 'bg-gray-200 text-gray-600 cursor-not-allowed'
+                  : 'bg-[#00BFFF] hover:bg-[#00BFFF]/80 text-white shadow-sm'
               }`}
               aria-label={locationLoading ? 'Verifying location' : 'Verify location'}
             >
               {locationLoading ? (
                 <ApiLoader size="small" className="mr-2" />
               ) : (
-                <MapPinIcon className="w-4 h-4 mr-2" />
+                <MapPin className="w-4 h-4 mr-2" />
               )}
               {locationLoading ? 'Verifying...' : 'Verify Location'}
             </button>
             <button
               onClick={() => navigate('/')}
-              className="text-[12px] text-pink-600 dark:text-pink-400 hover:underline"
+              className="text-xs text-[#00BFFF] hover:underline"
               aria-label="View all locations"
             >
               View app
@@ -392,44 +397,49 @@ export default function QRForm() {
 
   // Main form render
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 sm:p-6 flex items-center justify-center font-roboto text-[12px] antialiased">
+    <div className="min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8 py-10 sm:py-12 flex items-center justify-center text-xs font-roboto antialiased">
       <Toaster
         position="top-center"
         toastOptions={{
           duration: 4000,
           style: { fontSize: '12px' },
-          success: { iconTheme: { primary: '#10B981', secondary: '#fff' } },
-          error: { iconTheme: { primary: '#EF4444', secondary: '#fff' } },
+          success: {
+            style: { background: '#d1fae5', color: '#065f46', border: '1px solid #a7f3d0' },
+            icon: <CheckCircle className="h-4 w-4 text-green-800" />,
+          },
+          error: {
+            style: { background: '#fee2e2', color: '#b91c1c', border: '1px solid #fecaca' },
+            icon: <XCircle className="h-4 w-4 text-red-800" />,
+          },
         }}
       />
 
-      <div className="max-w-lg w-full bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div className="max-w-lg w-full bg-white rounded-md shadow-sm border border-gray-200 overflow-hidden">
         {/* Header */}
-        <div className="relative bg-pink-600 p-4 sm:p-6">
+        <div className="relative bg-[#00BFFF] p-4 sm:p-6">
           <div className="absolute top-4 right-4">
             <button
               onClick={() => navigate('/')}
-              className="p-1 rounded-full hover:bg-pink-700 transition-all duration-200 text-white"
+              className="p-1 rounded-full bg-gray-200 hover:bg-gray-300 text-gray-800 transition-all duration-200"
               aria-label="Close form"
             >
-              <XMarkIcon className="w-4 h-4" />
+              <X className="w-4 h-4" />
             </button>
           </div>
           <div className="flex items-center space-x-3">
             <div className="bg-white/10 p-2 rounded-md backdrop-blur-sm">
-              <DocumentArrowUpIcon className="w-4 h-4 text-white" />
+              <FileUp className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h2 className="text-[14px] font-bold text-white">Application Form</h2>
-              <p className="text-[12px] text-pink-100">QR Code: {code}</p>
+              <h2 className="text-[14px] font-semibold text-white">Visitor Entry Form</h2>
+              {/* <p className="text-xs text-white/80">QR Code: {code}</p> */}
             </div>
           </div>
         </div>
-
         {/* Progress bar */}
         {submitting && (
-          <div className="relative h-1 bg-gray-200 dark:bg-gray-700">
-            <div className="absolute top-0 left-0 h-full bg-pink-500 animate-[progress_3s_linear] w-full"></div>
+          <div className="relative h-1 bg-gray-200">
+            <div className="absolute top-0 left-0 h-full bg-[#00BFFF] animate-[progress_3s_linear] w-full"></div>
           </div>
         )}
 
@@ -438,13 +448,13 @@ export default function QRForm() {
           {/* Error messages */}
           {dataError && (
             <div
-              className="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-500 dark:border-yellow-400 p-3 rounded-r-md"
+              className="bg-red-100 border-l-4 border-red-200 p-3 rounded-r-md"
               role="alert"
               aria-describedby="data-error"
             >
               <div className="flex items-start">
-                <ExclamationTriangleIcon className="h-4 w-4 text-yellow-500 dark:text-yellow-400 flex-shrink-0" />
-                <p className="ml-2 text-[12px] text-yellow-700 dark:text-yellow-300" id="data-error">
+                <AlertTriangle className="h-4 w-4 text-red-600 flex-shrink-0" />
+                <p className="ml-2 text-xs text-red-600" id="data-error">
                   {dataError}
                 </p>
               </div>
@@ -455,9 +465,9 @@ export default function QRForm() {
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Name Field */}
             <div className="space-y-1">
-              <label className="flex items-center text-[12px] font-medium text-gray-700 dark:text-gray-300">
-                <UserIcon className="w-4 h-4 mr-1.5 text-gray-500 dark:text-gray-400" />
-                Name <span className="text-pink-500 ml-1">*</span>
+              <label className="flex items-center text-xs font-medium text-gray-600">
+                <User className="w-4 h-4 mr-1.5 text-gray-600" />
+                Name <span className="text-red-600 ml-1">*</span>
               </label>
               <input
                 type="text"
@@ -465,8 +475,8 @@ export default function QRForm() {
                 value={formData.name}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 text-[12px] rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200"
-                placeholder="John Doe"
+                className="w-full px-3 py-2 text-xs rounded-md border border-gray-200 bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#00BFFF] transition-all duration-200"
+                placeholder="Enter Your Name"
                 aria-required="true"
                 aria-label="Name"
               />
@@ -474,9 +484,9 @@ export default function QRForm() {
 
             {/* Email Field */}
             <div className="space-y-1">
-              <label className="flex items-center text-[12px] font-medium text-gray-700 dark:text-gray-300">
-                <EnvelopeIcon className="w-4 h-4 mr-1.5 text-gray-500 dark:text-gray-400" />
-                Email <span className="text-pink-500 ml-1">*</span>
+              <label className="flex items-center text-xs font-medium text-gray-600">
+                <Mail className="w-4 h-4 mr-1.5 text-gray-600" />
+                Email <span className="text-red-600 ml-1">*</span>
               </label>
               <input
                 type="email"
@@ -484,21 +494,44 @@ export default function QRForm() {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 text-[12px] rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200"
-                placeholder="john@example.com"
+                className="w-full px-3 py-2 text-xs rounded-md border border-gray-200 bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#00BFFF] transition-all duration-200"
+                placeholder="Enter Your Email"
                 aria-required="true"
                 aria-label="Email"
               />
               {formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email) && (
-                <p className="text-[12px] text-red-500 dark:text-red-400 mt-1">Please enter a valid email address</p>
+                <p className="text-xs text-red-600 mt-1">Please enter a valid email address</p>
+              )}
+            </div>
+
+            {/* Phone Number Field */}
+            <div className="space-y-1">
+              <label className="flex items-center text-xs font-medium text-gray-600">
+                <Phone className="w-4 h-4 mr-1.5 text-gray-600" />
+                Phone Number <span className="text-red-600 ml-1">*</span>
+              </label>
+              <input
+                type="tel"
+                name="number"
+                value={formData.number}
+                onChange={handleChange}
+                required
+                className="w-full px-3 py-2 text-xs rounded-md border border-gray-200 bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#00BFFF] transition-all duration-200"
+                placeholder="Enter Your 10 Digit Numbers 1234567890"
+                pattern="[0-9]{10}"
+                aria-required="true"
+                aria-label="Phone Number"
+              />
+              {formData.number && !/^[0-9]{10}$/.test(formData.number) && (
+                <p className="text-xs text-red-600 mt-1">Please enter a valid 10-digit phone number</p>
               )}
             </div>
 
             {/* Application Type */}
             <div className="space-y-1">
-              <label className="flex items-center text-[12px] font-medium text-gray-700 dark:text-gray-300">
-                <DocumentArrowUpIcon className="w-4 h-4 mr-1.5 text-gray-500 dark:text-gray-400" />
-                Application Type <span className="text-pink-500 ml-1">*</span>
+              <label className="flex items-center text-xs font-medium text-gray-600">
+                <FileUp className="w-4 h-4 mr-1.5 text-gray-600" />
+                Application Type <span className="text-red-600 ml-1">*</span>
               </label>
               <select
                 name="application_type"
@@ -506,7 +539,7 @@ export default function QRForm() {
                 onChange={handleChange}
                 required
                 disabled={applicationTypes.length === 0}
-                className="w-full px-3 py-2 text-[12px] rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200"
+                className="w-full px-3 py-2 text-xs rounded-md border border-gray-200 bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#00BFFF] transition-all duration-200"
                 aria-required="true"
                 aria-label="Application Type"
               >
@@ -524,8 +557,8 @@ export default function QRForm() {
 
             {/* Reason Field */}
             <div className="space-y-1">
-              <label className="flex items-center text-[12px] font-medium text-gray-700 dark:text-gray-300">
-                <DocumentArrowUpIcon className="w-4 h-4 mr-1.5 text-gray-500 dark:text-gray-400" />
+              <label className="flex items-center text-xs font-medium text-gray-600">
+                <FileUp className="w-4 h-4 mr-1.5 text-gray-600" />
                 Reason for Application
               </label>
               <textarea
@@ -533,7 +566,7 @@ export default function QRForm() {
                 value={formData.reason}
                 onChange={handleChange}
                 rows={3}
-                className="w-full px-3 py-2 text-[12px] rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200"
+                className="w-full px-3 py-2 text-xs rounded-md border border-gray-200 bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#00BFFF] transition-all duration-200"
                 placeholder="Briefly describe your reason for applying..."
                 aria-label="Reason for application"
               ></textarea>
@@ -541,8 +574,8 @@ export default function QRForm() {
 
             {/* Resume Upload */}
             <div className="space-y-1">
-              <label className="flex items-center text-[12px] font-medium text-gray-700 dark:text-gray-300">
-                <DocumentArrowUpIcon className="w-4 h-4 mr-1.5 text-gray-500 dark:text-gray-400" />
+              <label className="flex items-center text-xs font-medium text-gray-600">
+                <FileUp className="w-4 h-4 mr-1.5 text-gray-600" />
                 Resume (Optional, PDF/DOC/DOCX, Max 5MB)
               </label>
               <div className="flex items-center space-x-3">
@@ -555,7 +588,7 @@ export default function QRForm() {
                     className="hidden"
                     aria-label="Upload resume"
                   />
-                  <div className="px-3 py-2 text-[12px] rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-all duration-200 text-center">
+                  <div className="px-3 py-2 text-xs rounded-md border border-gray-200 bg-white hover:bg-gray-100 text-gray-800 text-center transition-all duration-200">
                     {formData.resume ? formData.resume.name : 'Choose file'}
                   </div>
                 </label>
@@ -563,15 +596,15 @@ export default function QRForm() {
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, resume: null })}
-                    className="p-1.5 text-red-500 hover:text-red-600 dark:hover:text-red-400 transition-all duration-200"
+                    className="p-1.5 text-red-600 hover:text-red-700 transition-all duration-200"
                     aria-label="Remove resume"
                   >
-                    <XMarkIcon className="w-4 h-4" />
+                    <X className="w-4 h-4" />
                   </button>
                 )}
               </div>
               {formData.resume && (
-                <p className="text-[12px] text-gray-500 dark:text-gray-400 mt-1">
+                <p className="text-xs text-gray-600 mt-1">
                   Selected: {formData.resume.name} ({(formData.resume.size / 1024).toFixed(2)} KB)
                 </p>
               )}
@@ -582,29 +615,29 @@ export default function QRForm() {
               <button
                 type="submit"
                 disabled={submitting || !isFormValid()}
-                className={`flex-1 flex items-center justify-center px-4 py-2 text-[12px] font-medium rounded-md transition-all duration-200 ${
+                className={`flex-1 flex items-center justify-center px-4 py-2 text-xs font-medium rounded-md transition-all duration-200 ${
                   submitting || !isFormValid()
-                    ? 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                    : 'bg-pink-600 hover:bg-pink-700 text-white shadow-sm'
+                    ? 'bg-gray-200 text-gray-600 cursor-not-allowed'
+                    : 'bg-[#00BFFF] hover:bg-[#00BFFF]/80 text-white shadow-sm'
                 }`}
                 aria-label={submitting ? 'Submitting application' : 'Submit application'}
               >
                 {submitting ? (
                   <ApiLoader size="small" className="mr-2" />
                 ) : (
-                  <PaperAirplaneIcon className="w-4 h-4 mr-2" />
+                  <Send className="w-4 h-4 mr-2" />
                 )}
                 {submitting ? 'Submitting...' : 'Submit Application'}
               </button>
-              <button
+              {/* <button
                 type="button"
                 onClick={() => navigate('/locations')}
-                className="flex-1 flex items-center justify-center px-4 py-2 text-[12px] font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md transition-all duration-200"
+                className="flex-1 flex items-center justify-center px-4 py-2 text-xs font-medium text-gray-800 bg-gray-200 hover:bg-gray-300 rounded-md transition-all duration-200"
                 aria-label="Cancel"
               >
-                <XMarkIcon className="w-4 h-4 mr-2" />
+                <X className="w-4 h-4 mr-2" />
                 Cancel
-              </button>
+              </button> */}
             </div>
           </form>
         </div>

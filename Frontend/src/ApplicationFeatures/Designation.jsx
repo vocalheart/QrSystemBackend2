@@ -8,7 +8,6 @@ import {
   PlusIcon,
   XMarkIcon,
   MagnifyingGlassIcon,
-  ArrowPathIcon,
   ChevronUpDownIcon,
 } from '@heroicons/react/24/outline';
 import ApiLoader from '../Loader/ApiLoader';
@@ -39,8 +38,6 @@ function reducer(state, action) {
       };
     case 'DELETE':
       return { ...state, data: state.data.filter((item) => item.id !== action.payload) };
-    case 'REFRESH':
-      return { ...state, loading: true };
     default:
       return state;
   }
@@ -56,7 +53,6 @@ function Designation() {
   const [designationToDelete, setDesignationToDelete] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState('add');
   const [sortOrder, setSortOrder] = useState('asc');
@@ -79,7 +75,10 @@ function Designation() {
         err.response?.status === 401 || err.response?.status === 403
           ? 'Your session has expired. Please log in again.'
           : 'Failed to fetch designations';
-      toast.error(message, { duration: 3000 });
+      toast.error(message, { 
+        duration: 3000,
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }
+      });
       if (err.response?.status === 401 || err.response?.status === 403) {
         navigate("/login");
       }
@@ -87,13 +86,6 @@ function Designation() {
       setIsFetching(false);
     }
   }, [navigate, token]);
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    dispatch({ type: 'REFRESH' });
-    await getAllDesignation();
-    setIsRefreshing(false);
-  };
 
   const validateDesignationName = (name) => {
     if (!name.trim()) return "Designation name is required";
@@ -104,7 +96,10 @@ function Designation() {
   const AddDesignation = async () => {
     const error = validateDesignationName(name);
     if (error) {
-      toast.error(error, { duration: 3000 });
+      toast.error(error, { 
+        duration: 3000,
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }
+      });
       return;
     }
     setIsSubmitting(true);
@@ -113,7 +108,10 @@ function Designation() {
       dispatch({ type: 'ADD', payload: { id: response.data.result, name } });
       setName('');
       setIsModalOpen(false);
-      toast.success('Designation added successfully', { duration: 2000 });
+      toast.success('Designation added successfully', { 
+        duration: 2000,
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }
+      });
       await getAllDesignation();
     } catch (error) {
       console.error('Error adding designation:', error);
@@ -121,7 +119,10 @@ function Designation() {
         error.response?.status === 401 || error.response?.status === 403
           ? 'Your session has expired. Please log in again.'
           : error.response?.data?.message || 'Failed to add designation';
-      toast.error(message, { duration: 3000 });
+      toast.error(message, { 
+        duration: 3000,
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }
+      });
       if (error.response?.status === 401 || error.response?.status === 403) {
         navigate("/login");
       }
@@ -133,7 +134,10 @@ function Designation() {
   const UpdateDesignation = async () => {
     const error = validateDesignationName(name);
     if (error) {
-      toast.error(error, { duration: 3000 });
+      toast.error(error, { 
+        duration: 3000,
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }
+      });
       return;
     }
     setIsSubmitting(true);
@@ -143,7 +147,10 @@ function Designation() {
       setEditId(null);
       setName('');
       setIsModalOpen(false);
-      toast.success('Designation updated successfully', { duration: 3000 });
+      toast.success('Designation updated successfully', { 
+        duration: 3000,
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }
+      });
       await getAllDesignation();
     } catch (error) {
       console.error('Error updating designation:', error);
@@ -151,7 +158,10 @@ function Designation() {
         error.response?.status === 401 || error.response?.status === 403
           ? 'Your session has expired. Please log in again.'
           : error.response?.data?.message || 'Failed to update designation';
-      toast.error(message, { duration: 3000 });
+      toast.error(message, { 
+        duration: 3000,
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }
+      });
       if (error.response?.status === 401 || error.response?.status === 403) {
         navigate("/login");
       }
@@ -165,7 +175,10 @@ function Designation() {
     try {
       await axiosAuth.delete(`${API_URL}/designation/${id}`);
       dispatch({ type: 'DELETE', payload: id });
-      toast.success('Designation deleted successfully', { duration: 3000 });
+      toast.success('Designation deleted successfully', { 
+        duration: 3000,
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }
+      });
       setIsDeleteConfirmOpen(false);
       setDesignationToDelete(null);
       await getAllDesignation();
@@ -175,7 +188,10 @@ function Designation() {
         err.response?.status === 401 || err.response?.status === 403
           ? 'Your session has expired. Please log in again.'
           : err.response?.data?.message || 'Failed to delete designation';
-      toast.error(message, { duration: 3000 });
+      toast.error(message, { 
+        duration: 3000,
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }
+      });
       if (err.response?.status === 401 || err.response?.status === 403) {
         navigate("/login");
       }
@@ -205,6 +221,7 @@ function Designation() {
     }
     setIsModalOpen(true);
   };
+
   const closeModal = () => {
     setIsModalOpen(false);
     setName('');
@@ -225,6 +242,7 @@ function Designation() {
     }, 300),
     []
   );
+
   const filteredData = state.data
     .filter((item) => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
     .sort((a, b) => {
@@ -243,72 +261,70 @@ function Designation() {
     getAllDesignation();
   }, [getAllDesignation]);
 
-  if (state.loading && !isRefreshing) {
+  if (state.loading && !isFetching) {
     return (
-      <div className="flex justify-center items-center min-h-screen bg-gray-50 dark:bg-gray-900 font-roboto text-[12px] antialiased">
+      <div className="flex justify-center items-center min-h-screen bg-slate-50 dark:bg-slate-900 font-[Inter] text-[12px] antialiased">
         <ApiLoader />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-6 sm:px-6 lg:px-8 font-roboto text-[12px] antialiased">
-      <Toaster position="bottom-right" toastOptions={{ style: { fontSize: "12px" } }} />
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 px-4 py-6 sm:px-6 lg:px-8 font-[Inter] text-[12px] antialiased">
+      <Toaster 
+        position="bottom-right" 
+        toastOptions={{ 
+          style: { 
+            fontSize: '12px', 
+            padding: '12px', 
+            borderRadius: '8px',
+            background: '#ffffff',
+            color: '#1e293b',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+          },
+          success: { iconTheme: { primary: '#4f46e5', secondary: '#fff' } },
+          error: { iconTheme: { primary: '#EF4444', secondary: '#fff' } },
+        }} 
+      />
       <div className="max-w-full sm:max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-center mb-4 sm:mb-6 gap-4">
           <div>
-            <h1 className="text-[12px] font-bold text-gray-900 dark:text-white text-center sm:text-left">
+            <h1 className="text-[12px] font-bold text-slate-900 dark:text-slate-100 text-center sm:text-left">
               Manage Designations
             </h1>
-            <p className="text-[12px] text-gray-600 dark:text-gray-300 mt-1 text-center sm:text-left">
+            <p className="text-[12px] text-slate-600 dark:text-slate-400 mt-1 text-center sm:text-left">
               Add, edit, or remove designations from your organization
             </p>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => openModal('add')}
-              className="flex items-center px-3 py-2 bg-pink-600 text-white rounded-md hover:bg-pink-700 transition-colors duration-200 disabled:opacity-50"
+              className="flex items-center px-3 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-500 dark:to-purple-500 text-white rounded-md hover:bg-gradient-to-r hover:from-indigo-700 hover:to-purple-700 dark:hover:from-indigo-600 dark:hover:to-purple-600 transition-colors duration-200 disabled:opacity-50"
               aria-label="Add new designation"
-              disabled={isSubmitting || isFetching || isRefreshing}
+              disabled={isSubmitting || isFetching}
             >
               <PlusIcon className="w-4 h-4 mr-1" />
               Add New
             </button>
-            <button
-              onClick={handleRefresh}
-              className="flex items-center px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200"
-              aria-label="Refresh designations"
-              disabled={isSubmitting || isFetching || isRefreshing}
-            >
-              {isRefreshing ? (
-                <ApiLoader size="small" />
-              ) : (
-                <>
-                  <ArrowPathIcon className="w-4 h-4 mr-1" />
-                  Refresh
-                </>
-              )}
-            </button>
           </div>
         </div>
 
-        {/* Search Section */}
-        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md mb-6 sm:mb-8 border border-gray-200 dark:border-gray-600">
+        <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-lg shadow-md mb-6 sm:mb-8 border border-slate-200 dark:border-slate-700">
           <div className="relative max-w-md">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400 dark:text-gray-500" />
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-slate-400 dark:text-slate-500" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Search designations..."
-              className="w-full pl-10 pr-10 py-2 text-[12px] text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all duration-300"
+              className="w-full pl-10 pr-10 py-2 text-[12px] text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300"
               aria-label="Search designations"
               disabled={isFetching}
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm('')}
-                className="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                className="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                 aria-label="Clear search"
                 disabled={isFetching}
               >
@@ -318,27 +334,26 @@ function Designation() {
           </div>
         </div>
 
-        {/* Designation Table */}
         {isFetching ? (
           <div className="flex justify-center items-center py-6">
             <ApiLoader />
           </div>
         ) : filteredData.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 text-center">
-            <p className="text-[12px] text-gray-500 dark:text-gray-300">
+          <div className="bg-white dark:bg-slate-800 p-8 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 text-center">
+            <p className="text-[12px] text-slate-500 dark:text-slate-400">
               {searchTerm
                 ? 'No designations match your search.'
                 : 'No designations found. Add one to get started!'}
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
+          <div className="overflow-x-auto bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700">
+            <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+              <thead className="bg-slate-50 dark:bg-slate-700">
                 <tr>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer"
+                    className="px-6 py-3 text-left text-[12px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer"
                     onClick={toggleSort}
                   >
                     <div className="flex items-center">
@@ -348,25 +363,25 @@ function Designation() {
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-right text-[12px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                    className="px-6 py-3 text-right text-[12px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                   >
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              <tbody className="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
                 {filteredData.map((item) => (
                   <tr
                     key={item.id}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+                    className="hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors duration-200"
                   >
-                    <td className="px-6 py-4 whitespace-nowrap text-[12px] font-medium text-gray-900 dark:text-gray-100">
+                    <td className="px-6 py-4 whitespace-nowrap text-[12px] font-medium text-slate-900 dark:text-slate-100">
                       {item.name}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-[12px] font-medium">
                       <button
                         onClick={() => openModal('edit', item)}
-                        className="text-gray-700 dark:text-gray-300 hover:text-pink-600 dark:hover:text-pink-400 mr-4 disabled:opacity-50"
+                        className="text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 mr-4 disabled:opacity-50"
                         aria-label={`Edit ${item.name}`}
                         disabled={isSubmitting || isFetching}
                       >
@@ -374,7 +389,7 @@ function Designation() {
                       </button>
                       <button
                         onClick={() => ConfirmDelete(item.id)}
-                        className="text-gray-700 dark:text-gray-300 hover:text-pink-600 dark:hover:text-pink-400 disabled:opacity-50"
+                        className="text-slate-700 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 disabled:opacity-50"
                         aria-label={`Delete ${item.name}`}
                         disabled={isSubmitting || isFetching}
                       >
@@ -388,17 +403,16 @@ function Designation() {
           </div>
         )}
 
-        {/* Add/Edit Modal */}
         {isModalOpen && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-            <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 max-w-md w-full">
+            <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 max-w-md w-full">
               <div className="flex justify-between items-start mb-4">
-                <h3 className="text-[12px] font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-[12px] font-semibold text-slate-900 dark:text-slate-100">
                   {modalType === 'edit' ? 'Edit Designation' : 'Add Designation'}
                 </h3>
                 <button
                   onClick={closeModal}
-                  className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                  className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                   aria-label="Close"
                   disabled={isSubmitting}
                 >
@@ -411,7 +425,7 @@ function Designation() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="Enter designation name"
-                  className="w-full px-3 py-2 text-[12px] text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all duration-300"
+                  className="w-full px-3 py-2 text-[12px] text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300"
                   aria-label="Designation name"
                   disabled={isSubmitting}
                 />
@@ -419,7 +433,7 @@ function Designation() {
               <div className="flex justify-end gap-3">
                 <button
                   onClick={closeModal}
-                  className="px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors duration-200 disabled:opacity-50"
+                  className="px-3 py-2 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-md hover:bg-slate-300 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-500 transition-colors duration-200 disabled:opacity-50"
                   aria-label="Cancel"
                   disabled={isSubmitting}
                 >
@@ -427,7 +441,7 @@ function Designation() {
                 </button>
                 <button
                   onClick={handleSubmit}
-                  className={`px-3 py-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors duration-200 disabled:opacity-50 bg-pink-600 hover:bg-pink-700`}
+                  className="px-3 py-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors duration-200 disabled:opacity-50 bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-500 dark:to-purple-500 hover:bg-gradient-to-r hover:from-indigo-700 hover:to-purple-700 dark:hover:from-indigo-600 dark:hover:to-purple-600"
                   aria-label={modalType === 'edit' ? 'Update' : 'Add'}
                   disabled={isSubmitting}
                 >
@@ -448,28 +462,29 @@ function Designation() {
             </div>
           </div>
         )}
-        {/* Delete Confirmation Modal */}
+
         {isDeleteConfirmOpen && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 max-w-xs w-full">
+            <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 max-w-xs w-full">
               <div className="flex justify-between items-start mb-3">
-                <h3 className="text-[12px] font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-[12px] font-semibold text-slate-900 dark:text-slate-100">
                   Confirm Deletion
                 </h3>
                 <button
                   onClick={CancelDelete}
-                  className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                  aria-label="Close">
+                  className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                  aria-label="Close"
+                >
                   <XMarkIcon className="w-5 h-5" />
                 </button>
               </div>
-              <p className="text-[12px] text-gray-700 dark:text-gray-300 mb-4">
+              <p className="text-[12px] text-slate-700 dark:text-slate-300 mb-4">
                 Are you sure you want to delete this designation? This action cannot be undone.
               </p>
               <div className="flex justify-end space-x-2">
                 <button
                   onClick={CancelDelete}
-                  className="px-3 py-2 text-[12px] bg-gray-300 dark:bg-gray-600 text-gray-900 dark:text-gray-100 rounded-md hover:bg-gray-400 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all duration-300"
+                  className="px-3 py-2 text-[12px] bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-md hover:bg-slate-300 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-500 transition-all duration-300"
                   aria-label="Cancel deletion"
                   disabled={isSubmitting || isFetching}
                 >
@@ -478,7 +493,7 @@ function Designation() {
                 <button
                   onClick={() => DeleteDesignation(designationToDelete)}
                   disabled={isSubmitting || isFetching}
-                  className="px-3 py-2 text-[12px] bg-pink-600 text-white rounded-md hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-2 text-[12px] bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label="Confirm deletion"
                 >
                   {isSubmitting ? <ApiLoader /> : "Delete"}
@@ -491,4 +506,5 @@ function Designation() {
     </div>
   );
 }
+
 export default Designation;

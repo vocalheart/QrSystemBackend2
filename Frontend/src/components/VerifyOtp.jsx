@@ -21,7 +21,7 @@ export default function VerifyOtp() {
     if (!data || !data.email || !data.name || !data.password) {
       toast.error('Invalid signup data. Please try signing up again.', {
         icon: <XCircleIcon className="h-4 w-4 text-red-500" />,
-        style: { fontSize: '12px', background: '#FEE2E2', color: '#B91C1C', border: '1px solid #FECACA' },
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px' },
       });
       navigate('/signup', { replace: true });
     } else {
@@ -46,12 +46,12 @@ export default function VerifyOtp() {
   // Resend OTP by calling preSignup again
   const handleRequestOtp = async () => {
     if (!signupData) return;
-
     try {
       setLoading(true);
       await preSignup(signupData.name, signupData.email, signupData.password, signupData.ip);
       toast.success('New OTP sent to your email!', {
-        style: { fontSize: '12px', background: '#D1FAE5', color: '#065F46', border: '1px solid #A7F3D0' },
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px' },
+        icon: <XCircleIcon className="h-4 w-4 text-indigo-600" />,
       });
     } catch (err) {
       setError(err.message);
@@ -72,7 +72,7 @@ export default function VerifyOtp() {
       }));
       toast.error('Invalid OTP format.', {
         icon: <XCircleIcon className="h-4 w-4 text-red-500" />,
-        style: { fontSize: '12px', background: '#FEE2E2', color: '#B91C1C', border: '1px solid #FECACA' },
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px' },
       });
       return;
     }
@@ -80,7 +80,7 @@ export default function VerifyOtp() {
     if (!signupData) {
       toast.error('No signup data found. Please try signing up again.', {
         icon: <XCircleIcon className="h-4 w-4 text-red-500" />,
-        style: { fontSize: '12px', background: '#FEE2E2', color: '#B91C1C', border: '1px solid #FECACA' },
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px' },
       });
       navigate('/signup', { replace: true });
       return;
@@ -92,7 +92,8 @@ export default function VerifyOtp() {
       await signup(signupData.email);
       localStorage.removeItem('tempSignupData');
       toast.success('Account created successfully! Please log in.', {
-        style: { fontSize: '12px', background: '#D1FAE5', color: '#065F46', border: '1px solid #A7F3D0' },
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px' },
+        icon: <XCircleIcon className="h-4 w-4 text-indigo-600" />,
       });
       navigate('/login', { replace: true });
     } catch (err) {
@@ -103,20 +104,27 @@ export default function VerifyOtp() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4 sm:p-6 font-roboto text-[12px] antialiased">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-4 sm:p-6 font-[Inter] text-[12px] antialiased">
       <Toaster
         position="top-center"
         toastOptions={{
           duration: 4000,
-          style: { fontSize: '12px' },
-          success: { iconTheme: { primary: '#10B981', secondary: '#fff' } },
-          error: { iconTheme: { primary: '#EF4444', secondary: '#fff' } },
+          style: {
+            fontSize: '12px',
+            background: '#ffffff',
+            color: '#1e293b',
+            padding: '12px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+          },
+         success: { iconTheme: { primary: '#4f46e5', secondary: '#fff' } },
+            error: { iconTheme: { primary: '#EF4444', secondary: '#fff' } },
         }}
       />
-      <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-6 sm:p-8">
+      <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 p-6 sm:p-8">
         <div className="text-center mb-6">
-          <h1 className="text-[16px] font-bold text-gray-900 dark:text-white">Verify Your Email</h1>
-          <p className="text-[12px] text-gray-500 dark:text-gray-400 mt-2">
+          <h1 className="text-[16px] font-bold text-slate-900 dark:text-slate-100">Verify Your Email</h1>
+          <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-2">
             Enter the OTP sent to {signupData?.email || 'your email'}
           </p>
         </div>
@@ -138,7 +146,7 @@ export default function VerifyOtp() {
           <div>
             <label
               htmlFor="otp"
-              className="block text-[12px] font-medium text-gray-700 dark:text-gray-300 mb-1"
+              className="block text-[12px] font-medium text-slate-700 dark:text-slate-300 mb-1"
             >
               OTP
             </label>
@@ -149,7 +157,7 @@ export default function VerifyOtp() {
                 id="otp"
                 value={formData.otp}
                 onChange={handleChange}
-                className="w-full pl-3 pr-3 py-2 text-[12px] rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200"
+                className="w-full pl-3 pr-3 py-2 text-[12px] rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
                 placeholder="Enter 6-digit OTP"
                 required
                 disabled={loading}
@@ -169,10 +177,10 @@ export default function VerifyOtp() {
               type="button"
               onClick={handleRequestOtp}
               disabled={loading || !signupData}
-              className={`flex-1 py-2 px-4 rounded-md text-[12px] font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 transition-all duration-200 flex items-center justify-center ${
+              className={`flex-1 py-2 px-4 rounded-md text-[12px] font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 flex items-center justify-center ${
                 loading || !signupData
-                  ? 'bg-pink-400 cursor-not-allowed'
-                  : 'bg-pink-600 hover:bg-pink-700 shadow-sm'
+                  ? 'bg-indigo-400 cursor-not-allowed'
+                  : 'bg-indigo-500 hover:bg-indigo-500 shadow-sm'
               }`}
               aria-label="Resend OTP"
             >
@@ -188,10 +196,10 @@ export default function VerifyOtp() {
             <button
               type="submit"
               disabled={loading || !formData.otp}
-              className={`flex-1 py-2 px-4 rounded-md text-[12px] font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 transition-all duration-200 flex items-center justify-center ${
+              className={`flex-1 py-2 px-4 rounded-md text-[12px] font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 flex items-center justify-center ${
                 loading || !formData.otp
-                  ? 'bg-pink-400 cursor-not-allowed'
-                  : 'bg-pink-600 hover:bg-pink-700 shadow-sm'
+                  ? 'bg-indigo-400 cursor-not-allowed'
+                  : 'bg-indigo-500  hover:bg-indigo-500 shadow-sm'
               }`}
               aria-label="Verify OTP"
             >
@@ -207,11 +215,11 @@ export default function VerifyOtp() {
           </div>
         </form>
         <div className="mt-4 text-center">
-          <p className="text-[12px] text-gray-500 dark:text-gray-400">
+          <p className="text-[12px] text-slate-500 dark:text-slate-400">
             Back to{' '}
             <Link
               to="/signup"
-              className="font-medium text-pink-600 dark:text-pink-400 hover:text-pink-500 dark:hover:text-pink-300 hover:underline"
+              className="font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 hover:underline"
               aria-label="Go back to signup"
             >
               Sign Up

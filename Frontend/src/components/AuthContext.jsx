@@ -2,6 +2,7 @@ import { createContext, useState, useEffect } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import Loder from '../Loader/ApiLoader';
+import { Navigate } from "react-router-dom";
 
 export const AuthContext = createContext();
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -73,53 +74,22 @@ export function AuthProvider({ children }) {
       setToken(null);
       delete axios.defaults.headers.common["Authorization"];
       setUser(null);
+    } finally {
+      // Always set loading to false after completion or failure
       setLoading(false);
     }
   };
 
-  // Refresh token (every 6 days, since token expires in 7 days)
-  const refreshToken = async () => {
-    if (!token) return;
-
-    try {
-      const response = await axios.post(
-        `${API_URL}/auth/refresh`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` }, timeout: 10000 }
-      );
-      const { token: newToken, user: newUser } = response.data.data;
-      if (isValidUser(newUser)) {
-        localStorage.setItem("token", newToken);
-        setToken(newToken);
-        axios.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
-        setUser(newUser);
-        console.log("Token refreshed:", newUser);
-      } else {
-        throw new Error("Invalid user data from refresh");
-      }
-    } catch (err) {
-      console.error("Token refresh error:", err.response?.data || err.message);
-      toast.error("Session expired. Please log in again.", {
-        style: { fontSize: "14px", background: "#FEE2E2", color: "#B91C1C", border: "1px solid #FECACA" },
-      });
-      localStorage.removeItem("token");
-      setToken(null);
-      delete axios.defaults.headers.common["Authorization"];
-      setUser(null);
-    }
-  };
-
   // Pre-signup to request OTP without creating account
-  const preSignup = async (name, email, password, ipAddress) => {
+  const preSignup = async (name, email, password, ipAddress, googleToken) => {
     try {
       const response = await axios.post(
         `${API_URL}/auth/pre-signup`,
-        { name, email: email.toLowerCase(), password, ip: ipAddress || ip },
+        googleToken
+          ? { googleToken, ip: ipAddress || ip }
+          : { name, email: email.toLowerCase(), password, ip: ipAddress || ip },
         { timeout: 10000 }
       );
-      toast.success("OTP sent to your email for verification!", {
-        style: { fontSize: "14px", background: "#D1FAE5", color: "#065F46", border: "1px solid #A7F3D0" },
-      });
       return response.data;
     } catch (err) {
       console.error("Pre-signup error:", err.response?.data || err.message);
@@ -186,67 +156,28 @@ export function AuthProvider({ children }) {
         { email: email.toLowerCase() },
         { timeout: 10000 }
       );
-      const { token: newToken, user: newUser } = response.data.data;
-      if (!isValidUser(newUser)) {
-        throw new Error("Invalid user data received from server");
-      }
-      localStorage.setItem("token", newToken);
-      setToken(newToken);
-      axios.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
-      setUser(newUser);
-      toast.success("Account created successfully!", {
+      toast.success("Account created successfully! Please log in.", {
         style: { fontSize: "14px", background: "#D1FAE5", color: "#065F46", border: "1px solid #A7F3D0" },
       });
-      return { token: newToken, user: newUser };
+      return response.data;
     } catch (err) {
       console.error("Signup error:", err.response?.data || err.message);
       const errorMsg =
         err.response?.status === 429
           ? "Too many signup attempts. Please try again later."
-          : err.response?.data?.message || "Failed to sign up. Please try again.";
-      toast.error(errorMsg, {
-        style: { fontSize: "14px", background: "#FEE2E2", color: "#B91C1C", border: "1px solid #FECACA" },
-      });
+          : err.response?.data?.message
       throw new Error(errorMsg);
     }
   };
 
-  // Initialize auth and set up token refresh
-  useEffect(() => {
-    let isMounted = true;
-
-    const initializeAuth = async () => {
-      await fetchIp();
-      await restoreSession();
-
-      // Refresh token every 6 days
-      const refreshInterval = setInterval(() => {
-        if (isMounted && token) {
-          refreshToken();
-        }
-      }, 6 * 24 * 60 * 60 * 1000); // 6 days
-
-      return () => {
-        isMounted = false;
-        clearInterval(refreshInterval);
-      };
-    };
-
-    initializeAuth().finally(() => {
-      if (isMounted) setLoading(false);
-    });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
   // Login function
-  const login = async (email, password, ipAddress) => {
+  const login = async (email, password, ipAddress, googleToken) => {
     try {
       const response = await axios.post(
         `${API_URL}/auth/login`,
-        { email: email.toLowerCase(), password, ip: ipAddress || ip },
+        googleToken
+          ? { googleToken, ip: ipAddress || ip }
+          : { email: email.toLowerCase(), password, ip: ipAddress || ip },
         { timeout: 10000 }
       );
       const { token: newToken, user: newUser } = response.data.data;
@@ -263,10 +194,8 @@ export function AuthProvider({ children }) {
       const errorMsg =
         err.response?.status === 429
           ? "Too many login attempts. Please try again later."
-          : err.response?.data?.message || "Failed to log in. Please check your credentials.";
-      toast.error(errorMsg, {
-        style: { fontSize: "14px", background: "#FEE2E2", color: "#B91C1C", border: "1px solid #FECACA" },
-      });
+          : err.response?.data?.message ;
+      
       throw new Error(errorMsg);
     }
   };
@@ -360,6 +289,15 @@ export function AuthProvider({ children }) {
       setIp("unknown");
     }
   };
+
+  useEffect(() => {
+    const initializeAuth = async () => {
+      await fetchIp();
+      await restoreSession();
+      setLoading(false); // Ensure loading is false after initialization
+    };
+    initializeAuth();
+  }, []);
 
   return (
     <AuthContext.Provider

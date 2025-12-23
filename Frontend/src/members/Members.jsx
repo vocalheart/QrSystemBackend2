@@ -5,7 +5,6 @@ import {
   UserIcon,
   EnvelopeIcon,
   LockClosedIcon,
-  ArrowPathIcon,
   EyeIcon,
   EyeSlashIcon,
   XMarkIcon,
@@ -13,8 +12,6 @@ import {
   PencilIcon,
   PlusIcon,
   TrashIcon,
-  CheckCircleIcon,
-  ExclamationCircleIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
   ChevronDownIcon,
@@ -24,7 +21,7 @@ import {
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import debounce from "lodash/debounce";
-
+import NoMembersFound from '../assets/NoMembersFound.png'
 export default function CreateMember() {
   const navigate = useNavigate();
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -41,7 +38,6 @@ export default function CreateMember() {
     updateErrors: {},
     loading: false,
     fetchLoading: true,
-    isRefreshing: false,
     showPassword: false,
     searchTerm: "",
     sortConfig: { key: "name", direction: "asc" },
@@ -75,7 +71,10 @@ export default function CreateMember() {
         err.response?.status === 401 || err.response?.status === 403
           ? "Your session has expired. Please log in again."
           : "Failed to fetch members";
-      toast.error(message, { duration: 3000 });
+      toast.error(message, {
+        duration: 3000,
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }
+      });
       if (err.response?.status === 401 || err.response?.status === 403) {
         navigate("/login");
       }
@@ -84,17 +83,13 @@ export default function CreateMember() {
     }
   }, [navigate]);
 
-  const handleRefresh = async () => {
-    updateState({ isRefreshing: true });
-    await loadMembers();
-    updateState({ isRefreshing: false });
-  };
-
   // Check admin role and fetch members
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      toast.error("Please log in to manage members.");
+      toast.error("Please log in to manage members.", {
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }
+      });
       navigate("/login", { replace: true });
       return;
     }
@@ -103,13 +98,17 @@ export default function CreateMember() {
     try {
       user = jwtDecode(token);
     } catch (err) {
-      toast.error("Invalid token. Please log in again.");
+      toast.error("Invalid token. Please log in again.", {
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }
+      });
       navigate("/login", { replace: true });
       return;
     }
 
     if (user.role !== "admin") {
-      toast.error("Only admins can manage members.");
+      toast.error("Only admins can manage members.", {
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' }
+      });
       navigate("/dashboard", { replace: true });
       return;
     }
@@ -184,12 +183,13 @@ export default function CreateMember() {
   // Toast notifications
   const showErrorToast = (message) => {
     toast.error(message, {
-      icon: <ExclamationCircleIcon className="h-5 w-5 text-red-500" />,
       position: "top-center",
       style: {
-        background: "#FEE2E2",
-        color: "#B91C1C",
-        border: "1px solid #FECACA",
+        background: "#ffffff",
+        color: "#1e293b",
+        padding: "12px",
+        borderRadius: "8px",
+        boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
         maxWidth: "90vw",
       },
     });
@@ -197,12 +197,13 @@ export default function CreateMember() {
 
   const showSuccessToast = (message) => {
     toast.success(message, {
-      icon: <CheckCircleIcon className="h-5 w-5 text-green-500" />,
       position: "top-center",
       style: {
-        background: "#D1FAE5",
-        color: "#065F46",
-        border: "1px solid #A7F3D0",
+        background: "#ffffff",
+        color: "#1e293b",
+        padding: "12px",
+        borderRadius: "8px",
+        boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
         maxWidth: "90vw",
       },
     });
@@ -228,6 +229,7 @@ export default function CreateMember() {
         return "";
     }
   };
+
   // Handle form input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -236,6 +238,7 @@ export default function CreateMember() {
       errors: { ...state.errors, [name]: validateField(name, value) },
     });
   };
+
   const handleUpdateChange = (e) => {
     const { name, value } = e.target;
     updateState({
@@ -246,6 +249,7 @@ export default function CreateMember() {
       },
     });
   };
+
   // Handle sorting
   const requestSort = (key) => {
     updateState({
@@ -258,6 +262,7 @@ export default function CreateMember() {
       },
     });
   };
+
   // Handle create member submission
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -302,6 +307,7 @@ export default function CreateMember() {
       updateState({ loading: false });
     }
   };
+
   // Handle update member submission
   const handleUpdateSubmit = async (e) => {
     e.preventDefault();
@@ -381,63 +387,55 @@ export default function CreateMember() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-6 sm:px-6 lg:px-8 font-roboto text-[12px] antialiased">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 px-4 py-6 sm:px-6 lg:px-8 font-[Inter] text-[12px] antialiased">
       <Toaster
-        position="top-right"
-        toastOptions={{ style: { fontSize: "12px" } }}
+        position="bottom-right"
+        toastOptions={{
+          style: {
+            fontSize: "12px",
+            padding: "12px",
+            borderRadius: "8px",
+            background: "#ffffff",
+            color: "#1e293b",
+            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+          },
+          success: { iconTheme: { primary: '#4f46e5', secondary: '#fff' } },
+          error: { iconTheme: { primary: '#EF4444', secondary: '#fff' } },
+        }}
       />
       <div className="max-w-full sm:max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-4 sm:mb-6 gap-4">
           <div>
-            <h1 className="text-[12px] font-bold text-gray-900 dark:text-white text-center sm:text-left">
+            <h1 className="text-[12px] font-bold text-slate-900 dark:text-slate-100 text-center sm:text-left">
               Manage Members
             </h1>
-            <p className="text-[12px] text-gray-600 dark:text-gray-300 mt-1 text-center sm:text-left">
+            <p className="text-[12px] text-slate-600 dark:text-slate-400 mt-1 text-center sm:text-left">
               Add, edit, or remove members from your organization
             </p>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => updateState({ dialogOpen: true })}
-              className="flex items-center px-3 py-2 bg-pink-600 text-white rounded-md hover:bg-pink-700 transition-colors duration-200 disabled:opacity-50"
+              className="flex items-center px-3 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-500 dark:to-purple-500 text-white rounded-md hover:bg-gradient-to-r hover:from-indigo-700 hover:to-purple-700 dark:hover:from-indigo-600 dark:hover:to-purple-600 transition-colors duration-200 disabled:opacity-50"
               aria-label="Add new member"
-              disabled={
-                state.loading || state.fetchLoading || state.isRefreshing
-              }
+              disabled={state.loading || state.fetchLoading}
             >
               <PlusIcon className="w-4 h-4 mr-1" />
               Add New
-            </button>
-            <button
-              onClick={handleRefresh}
-              className="flex items-center px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-200"
-              aria-label="Refresh members"
-              disabled={
-                state.loading || state.fetchLoading || state.isRefreshing
-              }
-            >
-              {state.isRefreshing ? (
-                <ArrowPathIcon className="animate-spin w-4 h-4 mr-1" />
-              ) : (
-                <>
-                  <ArrowPathIcon className="w-4 h-4 mr-1" />
-                  Refresh
-                </>
-              )}
             </button>
           </div>
         </div>
 
         {/* Search and Filter Bar */}
-        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-md mb-6 sm:mb-8 border border-gray-200 dark:border-gray-600">
+        <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-lg shadow-md mb-6 sm:mb-8 border border-slate-200 dark:border-slate-700">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1 max-w-md">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500" />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
               <input
                 type="text"
                 placeholder="Search members..."
-                className="w-full pl-10 pr-10 py-2 text-[12px] text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all duration-300"
+                className="w-full pl-10 pr-10 py-2 text-[12px] text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300"
                 value={state.searchTerm}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 aria-label="Search members"
@@ -446,7 +444,7 @@ export default function CreateMember() {
               {state.searchTerm && (
                 <button
                   onClick={() => updateState({ searchTerm: "" })}
-                  className="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  className="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                   aria-label="Clear search"
                   disabled={state.fetchLoading}
                 >
@@ -457,19 +455,19 @@ export default function CreateMember() {
             <div className="relative">
               <button
                 onClick={() => updateState({ showFilters: !state.showFilters })}
-                className="flex items-center px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors text-[12px]"
+                className="flex items-center px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 transition-colors text-[12px]"
                 aria-label="Toggle filters"
               >
-                <FunnelIcon className="w-4 h-4 mr-1 text-gray-500 dark:text-gray-400" />
+                <FunnelIcon className="w-4 h-4 mr-1 text-slate-500 dark:text-slate-400" />
                 Filters
                 {state.showFilters ? (
-                  <ChevronUpIcon className="w-4 h-4 ml-1 text-gray-500 dark:text-gray-400" />
+                  <ChevronUpIcon className="w-4 h-4 ml-1 text-slate-500 dark:text-slate-400" />
                 ) : (
-                  <ChevronDownIcon className="w-4 h-4 ml-1 text-gray-500 dark:text-gray-400" />
+                  <ChevronDownIcon className="w-4 h-4 ml-1 text-slate-500 dark:text-slate-400" />
                 )}
               </button>
               {state.showFilters && (
-                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-10 p-3">
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 z-10 p-3">
                   <div className="space-y-2">
                     <label className="flex items-center space-x-2">
                       <input
@@ -483,9 +481,9 @@ export default function CreateMember() {
                             },
                           })
                         }
-                        className="rounded text-pink-600 focus:ring-pink-500"
+                        className="rounded text-indigo-600 focus:ring-indigo-500"
                       />
-                      <span className="text-[12px] text-gray-700 dark:text-gray-300">
+                      <span className="text-[12px] text-slate-700 dark:text-slate-300">
                         Active Members
                       </span>
                     </label>
@@ -501,9 +499,9 @@ export default function CreateMember() {
                             },
                           })
                         }
-                        className="rounded text-pink-600 focus:ring-pink-500"
+                        className="rounded text-indigo-600 focus:ring-indigo-500"
                       />
-                      <span className="text-[12px] text-gray-700 dark:text-gray-300">
+                      <span className="text-[12px] text-slate-700 dark:text-slate-300">
                         Inactive Members
                       </span>
                     </label>
@@ -519,9 +517,9 @@ export default function CreateMember() {
                             },
                           })
                         }
-                        className="rounded text-pink-600 focus:ring-pink-500"
+                        className="rounded text-indigo-600 focus:ring-indigo-500"
                       />
-                      <span className="text-[12px] text-gray-700 dark:text-gray-300">
+                      <span className="text-[12px] text-slate-700 dark:text-slate-300">
                         Added in last 7 days
                       </span>
                     </label>
@@ -535,24 +533,43 @@ export default function CreateMember() {
         {/* Members Table */}
         {state.fetchLoading ? (
           <div className="flex justify-center items-center py-6">
-            <ArrowPathIcon className="animate-spin h-6 w-6 text-pink-600" />
+            <svg
+              className="animate-spin h-6 w-6 text-indigo-600"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
           </div>
         ) : state.filteredMembers.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 text-center">
-            <p className="text-[12px] text-gray-500 dark:text-gray-300">
+          <div className="bg-white dark:bg-slate-800 p-8 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 text-center">
+            <p className="text-[12px] text-slate-500 dark:text-slate-400">
               {state.searchTerm
                 ? "No members match your search."
-                : "No members found. Add one to get started!"}
+                : <img src={NoMembersFound} className="w-96 m-auto"></img>}
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
+          <div className="overflow-x-auto bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700">
+            <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+              <thead className="bg-slate-50 dark:bg-slate-700">
                 <tr>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer"
+                    className="px-6 py-3 text-left text-[12px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer"
                     onClick={() => requestSort("name")}
                   >
                     <div className="flex items-center">
@@ -562,7 +579,7 @@ export default function CreateMember() {
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer"
+                    className="px-6 py-3 text-left text-[12px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer"
                     onClick={() => requestSort("status")}
                   >
                     <div className="flex items-center">
@@ -572,7 +589,7 @@ export default function CreateMember() {
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer"
+                    className="px-6 py-3 text-left text-[12px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer"
                     onClick={() => requestSort("email")}
                   >
                     <div className="flex items-center">
@@ -582,7 +599,7 @@ export default function CreateMember() {
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-[12px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer"
+                    className="px-6 py-3 text-left text-[12px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer"
                     onClick={() => requestSort("created_at")}
                   >
                     <div className="flex items-center">
@@ -592,23 +609,22 @@ export default function CreateMember() {
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-right text-[12px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
+                    className="px-6 py-3 text-right text-[12px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                   >
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+              <tbody className="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
                 {state.filteredMembers?.map((member) => (
                   <tr
                     key={member?.id || Math.random()}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+                    className="hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors duration-200"
                   >
-                    <td className="px-6 py-4 whitespace-nowrap text-[12px] font-medium text-gray-900 dark:text-gray-100">
+                    <td className="px-6 py-4 whitespace-nowrap text-[12px] font-medium text-slate-900 dark:text-slate-100">
                       {member?.name || "—"}
                     </td>
-
-                    <td className="px-6 py-4 whitespace-nowrap text-[12px] text-gray-900 dark:text-gray-100">
+                    <td className="px-6 py-4 whitespace-nowrap text-[12px] text-slate-900 dark:text-slate-100">
                       <span
                         className={`px-2 py-1 rounded-full text-[12px] font-medium ${
                           member?.status === "active"
@@ -622,12 +638,10 @@ export default function CreateMember() {
                           : "Unknown"}
                       </span>
                     </td>
-
-                    <td className="px-6 py-4 whitespace-nowrap text-[12px] text-gray-900 dark:text-gray-100">
+                    <td className="px-6 py-4 whitespace-nowrap text-[12px] text-slate-900 dark:text-slate-100">
                       {member?.email || "—"}
                     </td>
-
-                    <td className="px-6 py-4 whitespace-nowrap text-[12px] text-gray-900 dark:text-gray-100">
+                    <td className="px-6 py-4 whitespace-nowrap text-[12px] text-slate-900 dark:text-slate-100">
                       {member?.created_at
                         ? new Date(member.created_at).toLocaleDateString(
                             "en-US",
@@ -639,7 +653,6 @@ export default function CreateMember() {
                           )
                         : "—"}
                     </td>
-
                     <td className="px-6 py-4 whitespace-nowrap text-right text-[12px] font-medium">
                       <button
                         onClick={() =>
@@ -652,13 +665,12 @@ export default function CreateMember() {
                             updateDialogOpen: true,
                           })
                         }
-                        className="text-gray-700 dark:text-gray-300 hover:text-pink-600 dark:hover:text-pink-400 mr-4 disabled:opacity-50"
+                        className="text-slate-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 mr-4 disabled:opacity-50"
                         aria-label={`Edit ${member?.name || ""}`}
                         disabled={state.loading || state.fetchLoading}
                       >
                         <PencilIcon className="w-5 h-5" />
                       </button>
-
                       <button
                         onClick={() =>
                           updateState({
@@ -666,7 +678,7 @@ export default function CreateMember() {
                             deleteDialogOpen: true,
                           })
                         }
-                        className="text-gray-700 dark:text-gray-300 hover:text-pink-600 dark:hover:text-pink-400 disabled:opacity-50"
+                        className="text-slate-700 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 disabled:opacity-50"
                         aria-label={`Delete ${member?.name || ""}`}
                         disabled={state.loading || state.fetchLoading}
                       >
@@ -688,14 +700,14 @@ export default function CreateMember() {
             aria-modal="true"
             ref={dialogRef}
           >
-            <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 max-w-md w-full">
+            <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 max-w-md w-full">
               <div className="flex justify-between items-start mb-4">
-                <h3 className="text-[12px] font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-[12px] font-semibold text-slate-900 dark:text-slate-100">
                   Add New Member
                 </h3>
                 <button
                   onClick={() => updateState({ dialogOpen: false })}
-                  className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                  className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                   aria-label="Close"
                   disabled={state.loading}
                 >
@@ -704,7 +716,20 @@ export default function CreateMember() {
               </div>
               {state.errors.general && (
                 <div className="mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg flex items-start text-[12px]">
-                  <ExclamationCircleIcon className="h-5 w-5 text-red-500 dark:text-red-400 mt-0.5 mr-2 flex-shrink-0" />
+                  <svg
+                    className="h-5 w-5 text-red-500 dark:text-red-400 mt-0.5 mr-2 flex-shrink-0"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
                   <span>{state.errors.general}</span>
                 </div>
               )}
@@ -712,22 +737,22 @@ export default function CreateMember() {
                 <div>
                   <label
                     htmlFor="name"
-                    className="block text-[12px] font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+                    className="block text-[12px] font-medium text-slate-700 dark:text-slate-300 mb-1.5"
                   >
                     Full Name
                   </label>
                   <div className="relative">
-                    <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
+                    <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
                     <input
                       type="text"
                       name="name"
                       id="name"
                       value={state.formData.name}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-4 py-2 text-[12px] border rounded-md focus:ring-2 focus:ring-pink-500 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 ${
+                      className={`w-full pl-10 pr-4 py-2 text-[12px] border rounded-md focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 ${
                         state.errors.name
                           ? "border-red-500 focus:border-red-500"
-                          : "border-gray-300 dark:border-gray-600"
+                          : "border-slate-300 dark:border-slate-600"
                       }`}
                       placeholder="Enter member's full name"
                       required
@@ -751,22 +776,22 @@ export default function CreateMember() {
                 <div>
                   <label
                     htmlFor="email"
-                    className="block text-[12px] font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+                    className="block text-[12px] font-medium text-slate-700 dark:text-slate-300 mb-1.5"
                   >
                     Email Address
                   </label>
                   <div className="relative">
-                    <EnvelopeIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
+                    <EnvelopeIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
                     <input
                       type="email"
                       name="email"
                       id="email"
                       value={state.formData.email}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-4 py-2 text-[12px] border rounded-md focus:ring-2 focus:ring-pink-500 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 ${
+                      className={`w-full pl-10 pr-4 py-2 text-[12px] border rounded-md focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 ${
                         state.errors.email
                           ? "border-red-500 focus:border-red-500"
-                          : "border-gray-300 dark:border-gray-600"
+                          : "border-slate-300 dark:border-slate-600"
                       }`}
                       placeholder="Enter member's email"
                       required
@@ -789,22 +814,22 @@ export default function CreateMember() {
                 <div>
                   <label
                     htmlFor="password"
-                    className="block text-[12px] font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+                    className="block text-[12px] font-medium text-slate-700 dark:text-slate-300 mb-1.5"
                   >
                     Password
                   </label>
                   <div className="relative">
-                    <LockClosedIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
+                    <LockClosedIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
                     <input
                       type={state.showPassword ? "text" : "password"}
                       name="password"
                       id="password"
                       value={state.formData.password}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-10 py-2 text-[12px] border rounded-md focus:ring-2 focus:ring-pink-500 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 ${
+                      className={`w-full pl-10 pr-10 py-2 text-[12px] border rounded-md focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 ${
                         state.errors.password
                           ? "border-red-500 focus:border-red-500"
-                          : "border-gray-300 dark:border-gray-600"
+                          : "border-slate-300 dark:border-slate-600"
                       }`}
                       placeholder="••••••••"
                       required
@@ -819,7 +844,7 @@ export default function CreateMember() {
                       onClick={() =>
                         updateState({ showPassword: !state.showPassword })
                       }
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                       aria-label={
                         state.showPassword ? "Hide password" : "Show password"
                       }
@@ -839,7 +864,7 @@ export default function CreateMember() {
                       {state.errors.password}
                     </p>
                   )}
-                  <p className="mt-1 text-[12px] text-gray-500 dark:text-gray-400">
+                  <p className="mt-1 text-[12px] text-slate-500 dark:text-slate-400">
                     Password must be at least 6 characters long.
                   </p>
                 </div>
@@ -847,7 +872,7 @@ export default function CreateMember() {
                   <button
                     type="button"
                     onClick={() => updateState({ dialogOpen: false })}
-                    className="px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors duration-200 disabled:opacity-50 text-[12px]"
+                    className="px-3 py-2 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-md hover:bg-slate-300 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-500 transition-colors duration-200 disabled:opacity-50 text-[12px]"
                     aria-label="Cancel"
                     disabled={state.loading}
                   >
@@ -856,11 +881,30 @@ export default function CreateMember() {
                   <button
                     type="submit"
                     disabled={state.loading}
-                    className={`px-3 py-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors duration-200 disabled:opacity-50 bg-pink-600 hover:bg-pink-700 text-[12px]`}
+                    className="px-3 py-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors duration-200 disabled:opacity-50 bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-500 dark:to-purple-500 hover:bg-gradient-to-r hover:from-indigo-700 hover:to-purple-700 dark:hover:from-indigo-600 dark:hover:to-purple-600 text-[12px]"
                     aria-label="Create member"
                   >
                     {state.loading ? (
-                      <ArrowPathIcon className="animate-spin h-4 w-4 mr-1 inline" />
+                      <svg
+                        className="animate-spin h-4 w-4 mr-1 inline"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
                     ) : (
                       <span className="flex items-center">
                         <PlusIcon className="w-4 h-4 mr-1" />
@@ -882,14 +926,14 @@ export default function CreateMember() {
             aria-modal="true"
             ref={dialogRef}
           >
-            <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 max-w-md w-full">
+            <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 max-w-md w-full">
               <div className="flex justify-between items-start mb-4">
-                <h3 className="text-[12px] font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-[12px] font-semibold text-slate-900 dark:text-slate-100">
                   Edit Member
                 </h3>
                 <button
                   onClick={() => updateState({ updateDialogOpen: false })}
-                  className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                  className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                   aria-label="Close"
                   disabled={state.loading}
                 >
@@ -898,7 +942,20 @@ export default function CreateMember() {
               </div>
               {state.updateErrors.general && (
                 <div className="mb-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg flex items-start text-[12px]">
-                  <ExclamationCircleIcon className="h-5 w-5 text-red-500 dark:text-red-400 mt-0.5 mr-2 flex-shrink-0" />
+                  <svg
+                    className="h-5 w-5 text-red-500 dark:text-red-400 mt-0.5 mr-2 flex-shrink-0"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
                   <span>{state.updateErrors.general}</span>
                 </div>
               )}
@@ -910,22 +967,22 @@ export default function CreateMember() {
                 <div>
                   <label
                     htmlFor="update-name"
-                    className="block text-[12px] font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+                    className="block text-[12px] font-medium text-slate-700 dark:text-slate-300 mb-1.5"
                   >
                     Full Name
                   </label>
                   <div className="relative">
-                    <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
+                    <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
                     <input
                       type="text"
                       name="name"
                       id="update-name"
                       value={state.updateFormData.name}
                       onChange={handleUpdateChange}
-                      className={`w-full pl-10 pr-4 py-2 text-[12px] border rounded-md focus:ring-2 focus:ring-pink-500 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 ${
+                      className={`w-full pl-10 pr-4 py-2 text-[12px] border rounded-md focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 ${
                         state.updateErrors.name
                           ? "border-red-500 focus:border-red-500"
-                          : "border-gray-300 dark:border-gray-600"
+                          : "border-slate-300 dark:border-slate-600"
                       }`}
                       placeholder="Enter member's full name"
                       required
@@ -951,22 +1008,22 @@ export default function CreateMember() {
                 <div>
                   <label
                     htmlFor="update-email"
-                    className="block text-[12px] font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+                    className="block text-[12px] font-medium text-slate-700 dark:text-slate-300 mb-1.5"
                   >
                     Email Address
                   </label>
                   <div className="relative">
-                    <EnvelopeIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
+                    <EnvelopeIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500" />
                     <input
                       type="email"
                       name="email"
                       id="update-email"
                       value={state.updateFormData.email}
                       onChange={handleUpdateChange}
-                      className={`w-full pl-10 pr-4 py-2 text-[12px] border rounded-md focus:ring-2 focus:ring-pink-500 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100 ${
+                      className={`w-full pl-10 pr-4 py-2 text-[12px] border rounded-md focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 ${
                         state.updateErrors.email
                           ? "border-red-500 focus:border-red-500"
-                          : "border-gray-300 dark:border-gray-600"
+                          : "border-slate-300 dark:border-slate-600"
                       }`}
                       placeholder="Enter member's email"
                       required
@@ -992,7 +1049,7 @@ export default function CreateMember() {
                   <button
                     type="button"
                     onClick={() => updateState({ updateDialogOpen: false })}
-                    className="px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors duration-200 disabled:opacity-50 text-[12px]"
+                    className="px-3 py-2 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-md hover:bg-slate-300 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-500 transition-colors duration-200 disabled:opacity-50 text-[12px]"
                     aria-label="Cancel"
                     disabled={state.loading}
                   >
@@ -1001,11 +1058,30 @@ export default function CreateMember() {
                   <button
                     type="submit"
                     disabled={state.loading}
-                    className={`px-3 py-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors duration-200 disabled:opacity-50 bg-pink-600 hover:bg-pink-700 text-[12px]`}
+                    className="px-3 py-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors duration-200 disabled:opacity-50 bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-500 dark:to-purple-500 hover:bg-gradient-to-r hover:from-indigo-700 hover:to-purple-700 dark:hover:from-indigo-600 dark:hover:to-purple-600 text-[12px]"
                     aria-label="Update member"
                   >
                     {state.loading ? (
-                      <ArrowPathIcon className="animate-spin h-4 w-4 mr-1 inline" />
+                      <svg
+                        className="animate-spin h-4 w-4 mr-1 inline"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
                     ) : (
                       <span className="flex items-center">
                         <PencilIcon className="w-4 h-4 mr-1" />
@@ -1027,27 +1103,27 @@ export default function CreateMember() {
             aria-modal="true"
             ref={dialogRef}
           >
-            <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg border border-gray-200 dark:border-gray-600 max-w-xs w-full">
+            <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 max-w-xs w-full">
               <div className="flex justify-between items-start mb-3">
-                <h3 className="text-[12px] font-semibold text-gray-900 dark:text-white">
+                <h3 className="text-[12px] font-semibold text-slate-900 dark:text-slate-100">
                   Confirm Deletion
                 </h3>
                 <button
                   onClick={() => updateState({ deleteDialogOpen: false })}
-                  className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                  className="text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                   aria-label="Close"
                 >
                   <XMarkIcon className="w-5 h-5" />
                 </button>
               </div>
-              <p className="text-[12px] text-gray-700 dark:text-gray-300 mb-4">
+              <p className="text-[12px] text-slate-700 dark:text-slate-300 mb-4">
                 Are you sure you want to delete this member? This action cannot
                 be undone.
               </p>
               <div className="flex justify-end space-x-2">
                 <button
                   onClick={() => updateState({ deleteDialogOpen: false })}
-                  className="px-3 py-2 text-[12px] bg-gray-300 dark:bg-gray-600 text-gray-900 dark:text-gray-100 rounded-md hover:bg-gray-400 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all duration-300"
+                  className="px-3 py-2 text-[12px] bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-md hover:bg-slate-300 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-500 transition-all duration-300"
                   aria-label="Cancel deletion"
                   disabled={state.loading || state.fetchLoading}
                 >
@@ -1056,11 +1132,30 @@ export default function CreateMember() {
                 <button
                   onClick={handleDeleteMember}
                   disabled={state.loading || state.fetchLoading}
-                  className="px-3 py-2 text-[12px] bg-pink-600 text-white rounded-md hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-2 text-[12px] bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label="Confirm deletion"
                 >
                   {state.loading ? (
-                    <ArrowPathIcon className="animate-spin h-4 w-4" />
+                    <svg
+                      className="animate-spin h-4 w-4"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
                   ) : (
                     "Delete"
                   )}

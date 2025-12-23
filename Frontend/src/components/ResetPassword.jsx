@@ -111,7 +111,7 @@ function ResetPassword() {
     } else {
       setFieldErrors((prev) => ({ ...prev, otp: 'Invalid OTP format' }));
       toast.error('Invalid OTP format', {
-        style: { fontSize: '12px', background: '#FEE2E2', color: '#B91C1C', border: '1px solid #FECACA' },
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px' },
         icon: <XCircleIcon className="h-4 w-4 text-red-500" />,
       });
     }
@@ -126,7 +126,7 @@ function ResetPassword() {
     if (!isValidEmail(email)) {
       setFieldErrors((prev) => ({ ...prev, email: 'Please enter a valid email address.' }));
       toast.error('Invalid email format.', {
-        style: { fontSize: '12px', background: '#FEE2E2', color: '#B91C1C', border: '1px solid #FECACA' },
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px' },
         icon: <XCircleIcon className="h-4 w-4 text-red-500" />,
       });
       setLoading(false);
@@ -137,7 +137,7 @@ function ResetPassword() {
     if (otpCode.length !== 6) {
       setFieldErrors((prev) => ({ ...prev, otp: 'Please enter a 6-digit OTP.' }));
       toast.error('Please enter a 6-digit OTP.', {
-        style: { fontSize: '12px', background: '#FEE2E2', color: '#B91C1C', border: '1px solid #FECACA' },
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px' },
         icon: <XCircleIcon className="h-4 w-4 text-red-500" />,
       });
       setLoading(false);
@@ -148,14 +148,14 @@ function ResetPassword() {
       await axios.post(`${API_URL}/auth/verify-otp`, { email, otp: otpCode }, { timeout: 15000 });
       setIsOtpVerified(true);
       toast.success('OTP verified successfully!', {
-        style: { fontSize: '12px', background: '#D1FAE5', color: '#065F46', border: '1px solid #A7F3D0' },
-        icon: <CheckCircleIcon className="h-4 w-4 text-green-500" />,
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px' },
+        icon: <CheckCircleIcon className="h-4 w-4 text-indigo-600" />,
       });
     } catch (err) {
       const errorMsg = err.response?.data?.error || 'Invalid or expired OTP';
       setError(errorMsg);
       toast.error(errorMsg, {
-        style: { fontSize: '12px', background: '#FEE2E2', color: '#B91C1C', border: '1px solid #FECACA' },
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px' },
         icon: <XCircleIcon className="h-4 w-4 text-red-500" />,
       });
     } finally {
@@ -175,7 +175,7 @@ function ResetPassword() {
         password: 'Password must be at least 8 characters long.',
       }));
       toast.error('Password too short.', {
-        style: { fontSize: '12px', background: '#FEE2E2', color: '#B91C1C', border: '1px solid #FECACA' },
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px' },
         icon: <XCircleIcon className="h-4 w-4 text-red-500" />,
       });
       setLoading(false);
@@ -185,7 +185,7 @@ function ResetPassword() {
     if (password !== confirmPassword) {
       setFieldErrors((prev) => ({ ...prev, confirmPassword: 'Passwords do not match.' }));
       toast.error('Passwords do not match.', {
-        style: { fontSize: '12px', background: '#FEE2E2', color: '#B91C1C', border: '1px solid #FECACA' },
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px' },
         icon: <XCircleIcon className="h-4 w-4 text-red-500" />,
       });
       setLoading(false);
@@ -199,15 +199,15 @@ function ResetPassword() {
         { timeout: 15000 }
       );
       toast.success('Password reset successfully! Redirecting to login...', {
-        style: { fontSize: '12px', background: '#D1FAE5', color: '#065F46', border: '1px solid #A7F3D0' },
-        icon: <CheckCircleIcon className="h-4 w-4 text-green-500" />,
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px' },
+        icon: <CheckCircleIcon className="h-4 w-4 text-indigo-600" />,
       });
       setTimeout(() => navigate('/login'), 1500);
     } catch (err) {
       const errorMsg = err.response?.data?.error || 'Failed to reset password';
       setError(errorMsg);
       toast.error(errorMsg, {
-        style: { fontSize: '12px', background: '#FEE2E2', color: '#B91C1C', border: '1px solid #FECACA' },
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px' },
         icon: <XCircleIcon className="h-4 w-4 text-red-500" />,
       });
     } finally {
@@ -223,7 +223,7 @@ function ResetPassword() {
     if (!isValidEmail(email)) {
       setFieldErrors((prev) => ({ ...prev, email: 'Please enter a valid email address.' }));
       toast.error('Invalid email format.', {
-        style: { fontSize: '12px', background: '#FEE2E2', color: '#B91C1C', border: '1px solid #FECACA' },
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px' },
         icon: <XCircleIcon className="h-4 w-4 text-red-500" />,
       });
       setLoading(false);
@@ -235,15 +235,15 @@ function ResetPassword() {
       setOtp(['', '', '', '', '', '']);
       setResendCooldown(60); // 60-second cooldown
       toast.success('New OTP sent to your email!', {
-        style: { fontSize: '12px', background: '#D1FAE5', color: '#065F46', border: '1px solid #A7F3D0' },
-        icon: <CheckCircleIcon className="h-4 w-4 text-green-500" />,
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px' },
+        icon: <CheckCircleIcon className="h-4 w-4 text-indigo-600" />,
       });
       inputRefs.current[0]?.focus();
     } catch (err) {
       const errorMsg = err.response?.data?.error || 'Failed to resend OTP';
       setError(errorMsg);
       toast.error(errorMsg, {
-        style: { fontSize: '12px', background: '#FEE2E2', color: '#B91C1C', border: '1px solid #FECACA' },
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px' },
         icon: <XCircleIcon className="h-4 w-4 text-red-500" />,
       });
     } finally {
@@ -254,28 +254,35 @@ function ResetPassword() {
   const passwordStrength = getPasswordStrength(password);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4 sm:p-6 font-roboto text-[12px] antialiased">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center p-4 sm:p-6 font-[Inter] text-[12px] antialiased">
       <Toaster
         position="top-center"
         toastOptions={{
           duration: 4000,
-          style: { fontSize: '12px' },
-          success: { iconTheme: { primary: '#10B981', secondary: '#fff' } },
+          style: {
+            fontSize: '12px',
+            background: '#ffffff',
+            color: '#1e293b',
+            padding: '12px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+          },
+          success: { iconTheme: { primary: '#4f46e5', secondary: '#fff' } },
           error: { iconTheme: { primary: '#EF4444', secondary: '#fff' } },
         }}
       />
-      <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 overflow-hidden">
         {/* Header */}
-        <div className="bg-pink-600 p-6 text-center">
+        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-500 dark:to-purple-500 p-6 text-center">
           <div className="flex justify-center mb-4">
-            <div className="bg-white dark:bg-gray-800 p-3 rounded-full shadow-md">
-              <LockClosedIcon className="h-8 w-8 text-pink-600 dark:text-pink-400" />
+            <div className="bg-white dark:bg-slate-800 p-3 rounded-full shadow-md">
+              <LockClosedIcon className="h-8 w-8 text-indigo-600 dark:text-indigo-400" />
             </div>
           </div>
           <h2 className="text-[16px] font-bold text-white">
             {isOtpVerified ? 'Set New Password' : 'Verify OTP'}
           </h2>
-          <p className="text-[12px] text-pink-100 mt-2">
+          <p className="text-[12px] text-indigo-100 dark:text-indigo-200 mt-2">
             {isOtpVerified
               ? 'Enter your new password'
               : `Enter the 6-digit OTP sent to ${email || 'your email'}`}
@@ -303,9 +310,9 @@ function ResetPassword() {
               <div>
                 <label
                   htmlFor="email"
-                  className="block text-[12px] font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center"
+                  className="block text-[12px] font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center"
                 >
-                  <EnvelopeIcon className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400" />
+                  <EnvelopeIcon className="h-4 w-4 mr-2 text-slate-500 dark:text-slate-400" />
                   Email Address
                 </label>
                 <input
@@ -316,7 +323,7 @@ function ResetPassword() {
                     setEmail(e.target.value);
                     setFieldErrors((prev) => ({ ...prev, email: '' }));
                   }}
-                  className="w-full px-3 py-2 text-[12px] rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200"
+                  className="w-full px-3 py-2 text-[12px] rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
                   placeholder="your@email.com"
                   required
                   autoComplete="email"
@@ -334,7 +341,7 @@ function ResetPassword() {
 
               <div>
                 <label
-                  className="block text-[12px] font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  className="block text-[12px] font-medium text-slate-700 dark:text-slate-300 mb-1"
                   id="otp-label"
                 >
                   OTP Code
@@ -352,7 +359,7 @@ function ResetPassword() {
                       onKeyDown={(e) => handleOtpKeyDown(index, e)}
                       onPaste={index === 0 ? handleOtpPaste : undefined}
                       ref={(el) => (inputRefs.current[index] = el)}
-                      className="w-full aspect-square text-center text-[14px] font-semibold rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200"
+                      className="w-full aspect-square text-center text-[14px] font-semibold rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
                       required
                       disabled={loading}
                       aria-label={`OTP digit ${index + 1}`}
@@ -372,8 +379,8 @@ function ResetPassword() {
                     disabled={loading || !email || resendCooldown > 0}
                     className={`text-[12px] font-medium ${
                       loading || !email || resendCooldown > 0
-                        ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
-                        : 'text-pink-600 dark:text-pink-400 hover:text-pink-500 dark:hover:text-pink-300 hover:underline'
+                        ? 'text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                        : 'text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 hover:underline'
                     }`}
                     aria-label="Resend OTP"
                   >
@@ -387,10 +394,10 @@ function ResetPassword() {
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full py-2 px-4 rounded-md text-[12px] font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 transition-all duration-200 flex items-center justify-center ${
+                className={`w-full py-2 px-4 rounded-md text-[12px] font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 flex items-center justify-center ${
                   loading
-                    ? 'bg-pink-400 cursor-not-allowed'
-                    : 'bg-pink-600 hover:bg-pink-700 shadow-sm'
+                    ? 'bg-indigo-400 cursor-not-allowed'
+                    : 'bg-indigo-500 hover:bg-indigo-500 shadow-sm'
                 }`}
                 aria-label="Verify OTP"
               >
@@ -409,9 +416,9 @@ function ResetPassword() {
               <div>
                 <label
                   htmlFor="password"
-                  className="block text-[12px] font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center"
+                  className="block text-[12px] font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center"
                 >
-                  <LockClosedIcon className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400" />
+                  <LockClosedIcon className="h-4 w-4 mr-2 text-slate-500 dark:text-slate-400" />
                   New Password
                 </label>
                 <div className="relative">
@@ -423,7 +430,7 @@ function ResetPassword() {
                       setPassword(e.target.value);
                       setFieldErrors((prev) => ({ ...prev, password: '' }));
                     }}
-                    className="w-full px-3 py-2 text-[12px] rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200"
+                    className="w-full px-3 py-2 text-[12px] rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
                     placeholder="At least 8 characters"
                     required
                     minLength="8"
@@ -434,7 +441,7 @@ function ResetPassword() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors duration-200"
                     aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? (
@@ -459,9 +466,9 @@ function ResetPassword() {
               <div>
                 <label
                   htmlFor="confirm-password"
-                  className="block text-[12px] font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center"
+                  className="block text-[12px] font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center"
                 >
-                  <LockClosedIcon className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400" />
+                  <LockClosedIcon className="h-4 w-4 mr-2 text-slate-500 dark:text-slate-400" />
                   Confirm Password
                 </label>
                 <div className="relative">
@@ -473,7 +480,7 @@ function ResetPassword() {
                       setConfirmPassword(e.target.value);
                       setFieldErrors((prev) => ({ ...prev, confirmPassword: '' }));
                     }}
-                    className="w-full px-3 py-2 text-[12px] rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200"
+                    className="w-full px-3 py-2 text-[12px] rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200"
                     placeholder="Confirm your password"
                     required
                     minLength="8"
@@ -484,7 +491,7 @@ function ResetPassword() {
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors duration-200"
                     aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
                   >
                     {showConfirmPassword ? (
@@ -507,10 +514,10 @@ function ResetPassword() {
               <button
                 type="submit"
                 disabled={loading}
-                className={`w-full py-2 px-4 rounded-md text-[12px] font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 transition-all duration-200 flex items-center justify-center ${
+                className={`w-full py-2 px-4 rounded-md text-[12px] font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 flex items-center justify-center ${
                   loading
-                    ? 'bg-pink-400 cursor-not-allowed'
-                    : 'bg-pink-600 hover:bg-pink-700 shadow-sm'
+                    ? 'bg-indigo-400 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-500 dark:to-purple-500 hover:bg-gradient-to-r hover:from-indigo-700 hover:to-purple-700 dark:hover:from-indigo-600 dark:hover:to-purple-600 shadow-sm'
                 }`}
                 aria-label="Reset password"
               >
@@ -529,7 +536,7 @@ function ResetPassword() {
           <div className="mt-6 text-center">
             <button
               onClick={() => navigate('/login')}
-              className="text-[12px] font-medium text-pink-600 dark:text-pink-400 hover:text-pink-500 dark:hover:text-pink-300 hover:underline"
+              className="text-[12px] font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 hover:underline"
               aria-label="Back to login"
             >
               Back to Login

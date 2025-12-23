@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
   ChevronDownIcon,
   ArrowRightIcon,
   EnvelopeIcon,
-  ChatBubbleBottomCenterTextIcon
+  ChatBubbleBottomCenterTextIcon,
 } from '@heroicons/react/24/outline';
+import { QrCode } from "lucide-react";
 
 export default function FAQ() {
   const navigate = useNavigate();
@@ -51,89 +53,206 @@ export default function FAQ() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 text-[12px]">
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-r from-pink-500 to-purple-500 dark:from-pink-600 dark:to-purple-600 text-white py-16 sm:py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 text-center">
-          <h1 className="text-4xl sm:text-5xl font-bold mb-4 animate-fade-in">
-            Frequently Asked Questions
-          </h1>
-          <p className="text-lg sm:text-xl text-pink-100 dark:text-pink-200 mb-8 max-w-3xl mx-auto">
-            Find answers to common questions about QRVibe
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-slate-100 text-slate-900 font-[Inter] text-[12px]">
+      {/* Hero Section with QR Code Display */}
+      <section className="relative bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-16 sm:py-24">
+        <div className="absolute -top-32 -left-32 w-64 h-64 rounded-full bg-gradient-to-r from-indigo-400 to-purple-400 opacity-20 blur-3xl animate-pulse z-0" />
+        <div className="absolute bottom-8 right-8 w-80 h-80 rounded-full bg-gradient-to-r from-purple-300 to-indigo-300 opacity-20 blur-3xl animate-pulse z-0" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center gap-8">
+          <div className="flex-1 text-center md:text-left">
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, ease: 'easeOut' }}
+              className="text-4xl sm:text-5xl font-bold mb-4"
+            >
+              Frequently Asked Questions
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2, ease: 'easeOut' }}
+              className="text-lg sm:text-xl text-slate-200 mb-8 max-w-3xl mx-auto md:mx-0"
+            >
+              Find answers to common questions about using QRVibe’s QR-based visitor management system.
+            </motion.p>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4, ease: 'easeOut' }}
+              className="flex flex-col sm:flex-row justify-center md:justify-start gap-4"
+            >
+              <button
+                onClick={() => navigate('/get-started')}
+                className="px-6 py-3 bg-white text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 hover:shadow-lg transform hover:scale-105 transition-all duration-200 shadow-md"
+              >
+                Get Started
+              </button>
+              <button
+                onClick={() => navigate('/usage')}
+                className="px-6 py-3 bg-transparent border-2 border-white text-white font-semibold rounded-lg hover:bg-indigo-100 hover:text-indigo-600 hover:border-indigo-100 transition-all duration-200 shadow-md"
+              >
+                Learn How to Use
+              </button>
+            </motion.div>
+          </div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.7, delay: 0.3 }}
+            className="flex-1 flex justify-center mt-6 md:mt-0"
+          >
+            <div className="relative max-w-xs mx-auto">
+              {/* QR Code Display Frame */}
+              <div className="relative bg-gradient-to-br from-slate-900 to-indigo-900 rounded-2xl p-4 shadow-2xl border-2 border-indigo-800 overflow-hidden">
+                {/* Header */}
+                <div className="bg-gradient-to-r from-indigo-700 to-purple-700 text-white p-3 rounded-t-lg text-center font-semibold text-sm flex items-center justify-between">
+                  <span className="flex items-center">
+                    <QrCode className="w-5 h-5 mr-2" />
+                    QRVibe FAQ Access
+                  </span>
+                  <div className="flex gap-2">
+                    <div className="w-2 h-2 rounded-full bg-white/40 animate-pulse"></div>
+                    <div className="w-2 h-2 rounded-full bg-white/40 animate-pulse" style={{ animationDelay: '0.3s' }}></div>
+                  </div>
+                </div>
+                {/* QR Code Area */}
+                <div className="bg-white rounded-lg p-6 flex flex-col items-center justify-center relative">
+                  {/* Mock QR Code */}
+                  <div className="w-52 h-52 bg-gradient-to-br from-slate-50 to-indigo-50 rounded-lg relative overflow-hidden shadow-inner">
+                    {/* QR Code Pattern (Static Mockup) */}
+                    <div className="absolute inset-0 grid grid-cols-7 grid-rows-7 gap-1 p-2">
+                      {[...Array(49)].map((_, i) => (
+                        <div
+                          key={i}
+                          className={`${
+                            Math.random() > 0.5 ? 'bg-slate-900' : 'bg-white'
+                          } rounded-sm`}
+                        ></div>
+                      ))}
+                    </div>
+                    {/* Corner Markers */}
+                    <div className="absolute top-2 left-2 w-9 h-9 border-3 border-indigo-600 rounded-md">
+                      <div className="absolute inset-1 border-3 border-indigo-600 rounded-sm"></div>
+                    </div>
+                    <div className="absolute top-2 right-2 w-9 h-9 border-3 border-indigo-600 rounded-md">
+                      <div className="absolute inset-1 border-3 border-indigo-600 rounded-sm"></div>
+                    </div>
+                    <div className="absolute bottom-2 left-2 w-9 h-9 border-3 border-indigo-600 rounded-md">
+                      <div className="absolute inset-1 border-3 border-indigo-600 rounded-sm"></div>
+                    </div>
+                    {/* Scanning Animation Overlay */}
+                    <motion.div
+                      className="absolute top-0 left-0 w-full h-2 bg-indigo-600/40"
+                      animate={{ y: [0, 188, 0] }}
+                      transition={{ repeat: Infinity, duration: 2.2, ease: 'linear' }}
+                    />
+                  </div>
+                  {/* Glowing Effect */}
+                  <div className="absolute -inset-4 bg-indigo-500/20 blur-lg animate-pulse rounded-lg"></div>
+                  <p className="text-slate-800 text-center font-semibold text-sm mt-4">
+                    Scan for QRVibe Support
+                  </p>
+                  <p className="text-slate-600 text-center text-xs mt-1">
+                    Access quick guides and support resources
+                  </p>
+                </div>
+                {/* Footer */}
+                <div className="bg-slate-50/90 p-3 rounded-b-lg flex justify-center">
+                  <button
+                    onClick={() => navigate('/usage')}
+                    className="text-slate-600 flex items-center text-xs font-medium hover:text-indigo-600 transition-colors"
+                  >
+                    <QrCode className="w-4 h-4 mr-1" />
+                    How to Scan
+                  </button>
+                </div>
+              </div>
+              {/* Decorative Elements */}
+              <div className="absolute -bottom-8 -left-8 w-28 h-28 bg-indigo-600 rounded-full opacity-15 blur-2xl z-0 animate-pulse"></div>
+              <div className="absolute -top-8 -right-8 w-24 h-24 bg-purple-600 rounded-full opacity-15 blur-2xl z-0 animate-pulse"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 rounded-2xl -z-10"></div>
+            </div>
+          </motion.div>
         </div>
-        <div className="absolute bottom-0 left-0 w-full h-2 bg-gradient-to-r from-pink-400 to-purple-400 dark:from-pink-500 dark:to-purple-500 animate-pulse"></div>
+        <div className="absolute bottom-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 to-purple-500 animate-pulse"></div>
       </section>
 
       {/* FAQ Content */}
-      <section className="py-16 bg-white dark:bg-gray-800">
+      <section className="py-16 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 md:px-8">
           <div className="space-y-4">
             {faqs.map((faq, index) => (
-              <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: index * 0.1 }}
+                className="border border-slate-200 rounded-lg overflow-hidden"
+              >
                 <button
                   onClick={() => toggleAccordion(index)}
-                  className="w-full flex justify-between items-center p-6 text-left bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors duration-200"
+                  className="w-full flex justify-between items-center p-6 text-left bg-slate-50 hover:bg-indigo-50 transition-colors duration-200"
                 >
-                  <h2 className="text-lg font-medium text-gray-800 dark:text-white">
+                  <h2 className="text-lg font-medium text-slate-900">
                     {faq.question}
                   </h2>
                   <ChevronDownIcon 
-                    className={`w-5 h-5 text-pink-600 dark:text-pink-400 transition-transform duration-200 ${
+                    className={`w-5 h-5 text-indigo-600 transition-transform duration-200 ${
                       activeIndex === index ? 'transform rotate-180' : ''
                     }`}
                   />
                 </button>
                 <div 
-                  className={`px-6 pb-6 pt-0 bg-white dark:bg-gray-800 transition-all duration-300 ${
+                  className={`px-6 pb-6 pt-0 bg-white transition-all duration-300 ${
                     activeIndex === index ? 'block' : 'hidden'
                   }`}
                 >
-                  <p className="text-gray-600 dark:text-gray-400">
+                  <p className="text-slate-600">
                     {faq.answer}
                   </p>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
       {/* Support Section */}
-      <section className="py-16 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
+      <section className="py-16 bg-gradient-to-br from-slate-50 to-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md overflow-hidden">
+          <div className="bg-white rounded-xl shadow-md overflow-hidden">
             <div className="grid grid-cols-1 md:grid-cols-2">
-              <div className="p-8 md:p-12 bg-pink-50 dark:bg-pink-900/10">
+              <div className="p-8 md:p-12 bg-indigo-50">
                 <div className="flex items-center mb-4">
-                  <ChatBubbleBottomCenterTextIcon className="w-8 h-8 text-pink-600 dark:text-pink-400 mr-3" />
-                  <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
+                  <ChatBubbleBottomCenterTextIcon className="w-8 h-8 text-indigo-600 mr-3" />
+                  <h2 className="text-2xl font-bold text-slate-900">
                     Still Need Help?
                   </h2>
                 </div>
-                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                <p className="text-slate-600 mb-6">
                   Our support team is ready to assist you with any questions not covered in our FAQs.
                 </p>
                 <button
                   onClick={() => navigate('/contact')}
-                  className="px-6 py-3 bg-pink-600 text-white font-semibold rounded-lg hover:bg-pink-700 transition-colors duration-300 shadow-md hover:scale-105 inline-flex items-center"
+                  className="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors duration-300 shadow-md hover:scale-105 inline-flex items-center"
                 >
                   Contact Support <ArrowRightIcon className="w-4 h-4 ml-2" />
                 </button>
               </div>
               <div className="p-8 md:p-12">
                 <div className="flex items-center mb-4">
-                  <EnvelopeIcon className="w-8 h-8 text-pink-600 dark:text-pink-400 mr-3" />
-                  <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
+                  <EnvelopeIcon className="w-8 h-8 text-indigo-600 mr-3" />
+                  <h2 className="text-2xl font-bold text-slate-900">
                     Email Us Directly
                   </h2>
                 </div>
-                <p className="text-gray-600 dark:text-gray-400 mb-6">
+                <p className="text-slate-600 mb-6">
                   Prefer to email? Send your questions to our support team and we'll get back to you within 24 hours.
                 </p>
                 <a
                   href="mailto:support@qrvibe.com"
-                  className="px-6 py-3 bg-white dark:bg-gray-700 border border-pink-600 text-pink-600 dark:text-pink-400 font-semibold rounded-lg hover:bg-pink-50 dark:hover:bg-pink-900/20 transition-colors duration-300 shadow-md hover:scale-105 inline-flex items-center"
+                  className="px-6 py-3 bg-white border border-indigo-600 text-indigo-600 font-semibold rounded-lg hover:bg-indigo-50 transition-colors duration-300 shadow-md hover:scale-105 inline-flex items-center"
                 >
                   support@qrvibe.com <ArrowRightIcon className="w-4 h-4 ml-2" />
                 </a>
@@ -144,54 +263,68 @@ export default function FAQ() {
       </section>
 
       {/* Related Resources */}
-      <section className="py-16 bg-white dark:bg-gray-800">
+      <section className="py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
-          <h2 className="text-3xl font-bold text-gray-800 dark:text-white text-center mb-12">
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="text-3xl font-bold text-slate-900 text-center mb-12"
+          >
             Related Resources
-          </h2>
+          </motion.h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div 
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.1 }}
               onClick={() => navigate('/usage')}
-              className="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 cursor-pointer"
+              className="bg-slate-50 p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 cursor-pointer"
             >
-              <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">
+              <h3 className="text-xl font-semibold text-slate-900 mb-3">
                 How QRVibe Works
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
+              <p className="text-slate-600 mb-4">
                 Learn about the step-by-step process for scanning QR codes and submitting forms.
               </p>
-              <div className="text-pink-600 dark:text-pink-400 font-medium flex items-center">
+              <div className="text-indigo-600 font-medium flex items-center">
                 Learn more <ArrowRightIcon className="w-4 h-4 ml-1" />
               </div>
-            </div>
-            <div 
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.2 }}
               onClick={() => navigate('/get-started')}
-              className="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 cursor-pointer"
+              className="bg-slate-50 p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 cursor-pointer"
             >
-              <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">
+              <h3 className="text-xl font-semibold text-slate-900 mb-3">
                 Getting Started Guide
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
+              <p className="text-slate-600 mb-4">
                 New to QRVibe? Follow our beginner's guide to start using the platform.
               </p>
-              <div className="text-pink-600 dark:text-pink-400 font-medium flex items-center">
+              <div className="text-indigo-600 font-medium flex items-center">
                 Get started <ArrowRightIcon className="w-4 h-4 ml-1" />
               </div>
-            </div>
-            <div 
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.3 }}
               onClick={() => navigate('/contact')}
-              className="bg-gray-50 dark:bg-gray-700 p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 cursor-pointer"
+              className="bg-slate-50 p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300 cursor-pointer"
             >
-              <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-3">
+              <h3 className="text-xl font-semibold text-slate-900 mb-3">
                 Technical Support
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
+              <p className="text-slate-600 mb-4">
                 Need technical assistance? Contact our support team for help.
               </p>
-              <div className="text-pink-600 dark:text-pink-400 font-medium flex items-center">
+              <div className="text-indigo-600 font-medium flex items-center">
                 Contact us <ArrowRightIcon className="w-4 h-4 ml-1" />
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>

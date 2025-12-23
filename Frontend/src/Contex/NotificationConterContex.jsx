@@ -6,7 +6,7 @@ export const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
   const [NotificationCount, setNotificationCount] = useState(0);
-  const API_URL = import.meta.env.VITE_API_URL
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const fetchNotificationCounter = useCallback(async () => {
     try {
@@ -24,20 +24,21 @@ export const CartProvider = ({ children }) => {
       setNotificationCount(response.data.count || 0);
     } catch (error) {
       console.error('Error fetching notification count:', error);
-      toast.error(error.response?.data?.error || 'Failed to fetch notification count', {
+      toast.error(error.response?.data?.message || 'Failed to fetch notification count', {
         position: 'top-right',
-        duration: 1000,
+        duration: 3000,
         style: {
           background: '#FEF2F2',
           border: '1px solid #FECACA',
           color: '#991B1B',
-          fontFamily: 'Roboto, sans-serif',
-          fontWeight: 700,
+          fontFamily: 'Inter, sans-serif',
+          fontWeight: 500,
+          borderRadius: '8px',
         },
       });
       setNotificationCount(0);
     }
-  }, []);
+  }, [API_URL]);
 
   return (
     <CartContext.Provider value={{ NotificationCount, fetchNotificationCounter }}>

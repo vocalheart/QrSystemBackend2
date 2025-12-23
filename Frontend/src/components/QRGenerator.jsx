@@ -65,7 +65,10 @@ const useQRCode = (user, navigate, API_URL) => {
           ? 'Your session has expired. Please log in again.'
           : error.response?.data?.message || 'Unable to load your QR codes.';
       updateState({ error: message, loading: false });
-      toast.error(message, { icon: <ExclamationTriangleIcon className="w-3 h-3 text-red-500" /> });
+      toast.error(message, { 
+        icon: <ExclamationTriangleIcon className="w-3 h-3 text-red-500" />,
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px' },
+      });
       if (error.response?.status === 401 || error.response?.status === 403) {
         navigate('/login');
       }
@@ -81,7 +84,10 @@ const useQRCode = (user, navigate, API_URL) => {
       }));
       updateState({ locations: transformed });
     } catch (error) {
-      toast.error('Failed to fetch locations', { icon: <ExclamationTriangleIcon className="w-3 h-3 text-red-500" /> });
+      toast.error('Failed to fetch locations', { 
+        icon: <ExclamationTriangleIcon className="w-3 h-3 text-red-500" />,
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px' },
+      });
     }
   }, [API_URL]);
 
@@ -98,9 +104,14 @@ const useQRCode = (user, navigate, API_URL) => {
           showDeleteConfirm: false,
           qrToDelete: null,
         });
-        toast.success('QR code deleted! You can now generate a new one.');
+        toast.success('QR code deleted! You can now generate a new one.', {
+          style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px' },
+        });
       } catch {
-        toast.error('Failed to delete QR code.', { icon: <ExclamationTriangleIcon className="w-3 h-3 text-red-500" /> });
+        toast.error('Failed to delete QR code.', { 
+          icon: <ExclamationTriangleIcon className="w-3 h-3 text-red-500" />,
+          style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px' },
+        });
       }
     },
     [API_URL, state.qrcodes, state.selectedQR, state.failedImages, state.imageLoading]
@@ -109,8 +120,13 @@ const useQRCode = (user, navigate, API_URL) => {
   const copyToClipboard = useCallback((url) => {
     navigator.clipboard
       .writeText(url)
-      .then(() => toast.success('URL copied to clipboard!'))
-      .catch(() => toast.error('Failed to copy URL.'));
+      .then(() => toast.success('URL copied to clipboard!', {
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px' },
+      }))
+      .catch(() => toast.error('Failed to copy URL.', {
+        icon: <ExclamationTriangleIcon className="w-3 h-3 text-red-500" />,
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px' },
+      }));
   }, []);
 
   const openQRDialog = useCallback((qr) => {
@@ -216,6 +232,7 @@ export default function QRGenerator() {
       if (value && !isValid) {
         toast.error('URL must start with https://admin.vocalheart.com/formsubmission/', {
           icon: <ExclamationTriangleIcon className="w-3 h-3 text-red-500" />,
+          style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px' },
         });
       }
     }, 400),
@@ -255,11 +272,14 @@ export default function QRGenerator() {
     if (!isValidUrl) {
       toast.error('Enter a valid URL starting with https://admin.vocalheart.com/formsubmission/', {
         icon: <ExclamationTriangleIcon className="w-3 h-3 text-red-500" />,
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px' },
       });
       return;
     }
     if (!user?.id) {
-      toast.error('User not authenticated.');
+      toast.error('User not authenticated.', {
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px' },
+      });
       return;
     }
     updateState({ formLoading: true });
@@ -306,7 +326,9 @@ export default function QRGenerator() {
           a.click();
           document.body.removeChild(a);
 
-          toast.success('QR code created and downloaded successfully!');
+          toast.success('QR code created and downloaded successfully!', {
+            style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px' },
+          });
           openQRDialog(newQR);
           updateState({ url: 'https://admin.vocalheart.com/formsubmission/' });
           urlInputRef.current?.focus();
@@ -323,6 +345,7 @@ export default function QRGenerator() {
             if (err.response.data.message.includes('User already has a QR code')) {
               toast.error('You already have a QR code. Delete it to create a new one.', {
                 icon: <ExclamationTriangleIcon className="w-3 h-3 text-red-500" />,
+                style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px' },
               });
               return;
             }
@@ -339,6 +362,7 @@ export default function QRGenerator() {
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to generate QR code.', {
         icon: <ExclamationTriangleIcon className="w-3 h-3 text-red-500" />,
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px' },
       });
     } finally {
       updateState({ formLoading: false });
@@ -363,14 +387,19 @@ export default function QRGenerator() {
       a.href = image;
       a.download = `qrcode-${qr.code}.png`;
       a.click();
-      toast.success('QR code downloaded successfully!');
+      toast.success('QR code downloaded successfully!', {
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px' },
+      });
     } catch {
-      toast.error('Failed to download QR code.', { icon: <ExclamationTriangleIcon className="w-3 h-3 text-red-500" /> });
+      toast.error('Failed to download QR code.', { 
+        icon: <ExclamationTriangleIcon className="w-3 h-3 text-red-500" />,
+        style: { background: '#ffffff', color: '#1e293b', padding: '12px', borderRadius: '8px' },
+      });
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 px-4 py-6 sm:px-6 lg:px-8 font-sans text-xs antialiased">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 px-4 py-6 sm:px-6 lg:px-8 font-[Inter] text-xs antialiased">
       <Toaster 
         position="bottom-right" 
         toastOptions={{ 
@@ -378,9 +407,12 @@ export default function QRGenerator() {
             fontSize: '12px', 
             padding: '10px 14px',
             borderRadius: '6px',
-            background: '#1f2937',
-            color: '#f9fafb'
-          } 
+            background: '#ffffff',
+            color: '#1e293b',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+          },
+          success: { iconTheme: { primary: '#4f46e5', secondary: '#fff' } },
+          error: { iconTheme: { primary: '#EF4444', secondary: '#fff' } },
         }} 
       />
       
@@ -388,40 +420,40 @@ export default function QRGenerator() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div>
-            <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
               QR Code Generator
             </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1 text-xs">
+            <p className="text-slate-600 dark:text-slate-400 mt-1 text-xs">
               Create and customize QR codes for seamless form submissions
             </p>
           </div>
         </div>
 
         {/* Generation Form */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-5">
+        <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 p-5">
           <form onSubmit={handleGenerate} className="space-y-5">
             <div>
               <label
                 htmlFor="url"
-                className="block font-medium text-gray-900 dark:text-white mb-2 text-xs"
+                className="block font-medium text-slate-900 dark:text-slate-100 mb-2 text-xs"
               >
                 Form Submission URL
               </label>
               <div className="relative">
-                <input
+                {/* <input
                   id="url"
                   ref={urlInputRef}
                   type="url"
                   value={url}
                   onChange={(e) => updateState({ url: e.target.value })}
                   placeholder="https://admin.vocalheart.com/formsubmission/"
-                  className={`w-full px-3 py-2.5 text-gray-900 dark:text-gray-100 bg-gray-50 dark:bg-gray-700 border ${
-                    isValidUrl ? 'border-gray-300 dark:border-gray-600' : 'border-red-500'
-                  } rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500 dark:focus:ring-pink-400 transition-all duration-200 text-xs`}
+                  className={`w-full px-3 py-2.5 text-slate-900 dark:text-slate-100 bg-white dark:bg-slate-700 border ${
+                    isValidUrl ? 'border-slate-300 dark:border-slate-600' : 'border-red-500'
+                  } rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-all duration-200 text-xs`}
                   required
                   disabled={qrcodes.length > 0 || formLoading}
                   aria-describedby={isValidUrl ? undefined : 'url-error'}
-                />
+                /> */}
                 {!isValidUrl && (
                   <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                     <ExclamationTriangleIcon className="h-3.5 w-3.5 text-red-500" />
@@ -429,7 +461,7 @@ export default function QRGenerator() {
                 )}
               </div>
               {!isValidUrl && (
-                <p id="url-error" className="mt-1.5 text-red-500 text-xs">
+                <p id="url-error" className="mt-1.5 text-red-500 dark:text-red-400 text-xs">
                   URL must start with https://admin.vocalheart.com/formsubmission/
                 </p>
               )}
@@ -439,7 +471,7 @@ export default function QRGenerator() {
               <button
                 type="submit"
                 disabled={formLoading || !isValidUrl || !user || qrcodes.length > 0}
-                className="w-full sm:w-auto px-4 py-2.5 bg-pink-600 text-white rounded-md hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-xs flex items-center justify-center"
+                className="w-full sm:w-auto px-4 py-2.5 bg-indigo-500  text-white rounded-md hover:bg-gradient-to-r hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium text-xs flex items-center justify-center"
                 aria-label="Generate QR code"
               >
                 {formLoading ? (
@@ -456,9 +488,9 @@ export default function QRGenerator() {
               </button>
               
               {qrcodes.length > 0 && (
-                <p className="text-gray-600 dark:text-gray-400 text-xs">
+                <p className="text-slate-600 dark:text-slate-400 text-xs">
                   You already have a QR code. Delete it to generate a new one.
-                  <span className="text-red-500 block mt-0.5">
+                  <span className="text-red-500 dark:text-red-400 block mt-0.5">
                     Note: Deleting will also remove associated form submission data.
                   </span>
                 </p>
@@ -468,7 +500,7 @@ export default function QRGenerator() {
             {qrValue && (
               <div
                 id="qr-img"
-                className="mx-auto mt-5 p-3 bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600"
+                className="mx-auto mt-5 p-3 bg-white dark:bg-slate-700 rounded-md border border-slate-200 dark:border-slate-600"
                 ref={qrRef}
               >
                 <QRCode
@@ -489,16 +521,16 @@ export default function QRGenerator() {
             aria-modal="true"
           >
             <div 
-              className="bg-white dark:bg-gray-800 p-5 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 max-w-md w-full mx-4"
+              className="bg-white dark:bg-slate-800 p-5 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 max-w-md w-full mx-4"
               ref={dialogRef}
             >
               <div className="flex justify-between items-center mb-4">
-                <h3 className="font-semibold text-gray-900 dark:text-white text-xs uppercase tracking-wide">
+                <h3 className="font-semibold text-slate-900 dark:text-slate-100 text-xs uppercase tracking-wide">
                   Your QR Code
                 </h3>
                 <button
                   onClick={closeQRDialog}
-                  className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                  className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
                   aria-label="Close dialog"
                 >
                   <XMarkIcon className="w-4 h-4" />
@@ -521,7 +553,7 @@ export default function QRGenerator() {
                     />
                   )
                 ) : (
-                  <div id="qr-img-dialog" className="p-2 bg-white rounded-md">
+                  <div id="qr-img-dialog" className="p-2 bg-white dark:bg-slate-700 rounded-md">
                     <QRCode
                       value={selectedQR.url}
                       size={240}
@@ -530,18 +562,18 @@ export default function QRGenerator() {
                 )}
               </div>
               
-              <p className="text-center text-gray-500 dark:text-gray-400 truncate mb-4 text-xs px-2 py-1.5 bg-gray-50 dark:bg-gray-700 rounded-md">
+              <p className="text-center text-slate-500 dark:text-slate-400 truncate mb-4 text-xs px-2 py-1.5 bg-slate-50 dark:bg-slate-700 rounded-md">
                 {selectedQR.url}
               </p>
               
-              <p className="text-center text-gray-600 dark:text-gray-300 mb-4 text-xs">
+              <p className="text-center text-slate-600 dark:text-slate-300 mb-4 text-xs">
                 Customize your QR code to match your brand or form design!
               </p>
               
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => handleCustomizeClick(selectedQR)}
-                  className="px-3 py-2 bg-pink-600 text-white rounded-md hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors duration-200 text-xs font-medium flex items-center justify-center"
+                  className="px-3 py-2 bg-indigo-500 text-white rounded-md hover:bg-gradient-to-r hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors duration-200 text-xs font-medium flex items-center justify-center"
                   aria-label="Customize QR Code and Form"
                 >
                   <CogIcon className="w-3.5 h-3.5 mr-1.5" />
@@ -550,7 +582,7 @@ export default function QRGenerator() {
                 
                 <button
                   onClick={() => copyToClipboard(selectedQR.url)}
-                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md flex items-center justify-center text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+                  className="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md flex items-center justify-center text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors duration-200"
                   aria-label="Copy URL"
                 >
                   <ClipboardIcon className="w-3.5 h-3.5 mr-1.5" />
@@ -559,7 +591,7 @@ export default function QRGenerator() {
                 
                 <button
                   onClick={() => handleDownload(selectedQR)}
-                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md flex items-center justify-center text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-200"
+                  className="px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md flex items-center justify-center text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors duration-200"
                   aria-label="Download QR code"
                 >
                   <ArrowDownTrayIcon className="w-3.5 h-3.5 mr-1.5" />
@@ -577,7 +609,7 @@ export default function QRGenerator() {
                 
                 <button
                   onClick={() => handleApplyClick(selectedQR)}
-                  className="col-span-2 px-3 py-2 bg-pink-600 text-white rounded-md hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-colors duration-200 text-xs font-medium"
+                  className="col-span-2 px-3 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 dark:from-indigo-500 dark:to-purple-500 text-white rounded-md hover:bg-gradient-to-r hover:from-indigo-700 hover:to-purple-700 dark:hover:from-indigo-600 dark:hover:to-purple-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors duration-200 text-xs font-medium"
                   aria-label="Apply QR code"
                 >
                   Apply QR Code
@@ -594,19 +626,19 @@ export default function QRGenerator() {
             role="dialog"
             aria-modal="true"
           >
-            <div className="bg-white dark:bg-gray-800 p-5 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 max-w-md w-full mx-4">
-              <h3 className="font-semibold text-gray-900 dark:text-white mb-3 text-xs uppercase tracking-wide">
+            <div className="bg-white dark:bg-slate-800 p-5 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 max-w-md w-full mx-4">
+              <h3 className="font-semibold text-slate-900 dark:text-slate-100 mb-3 text-xs uppercase tracking-wide">
                 Confirm Deletion
               </h3>
               
-              <p className="text-gray-600 dark:text-gray-400 mb-5 text-xs leading-relaxed">
+              <p className="text-slate-600 dark:text-slate-400 mb-5 text-xs leading-relaxed">
                 Are you sure you want to delete this QR code? This action will also remove associated form submission data and cannot be undone.
               </p>
               
               <div className="flex flex-col sm:flex-row justify-end gap-2">
                 <button
                   onClick={() => updateState({ showDeleteConfirm: false, qrToDelete: null })}
-                  className="px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors duration-200 text-xs"
+                  className="px-3 py-2 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-md hover:bg-slate-300 dark:hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-slate-500 transition-colors duration-200 text-xs"
                   aria-label="Cancel"
                 >
                   Cancel
@@ -630,21 +662,21 @@ export default function QRGenerator() {
             <ApiLoader />
           </div>
         ) : error ? (
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 text-center">
-            <p className="text-gray-500 dark:text-gray-300 text-xs">{error}</p>
+          <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 text-center">
+            <p className="text-slate-500 dark:text-slate-300 text-xs">{error}</p>
           </div>
         ) : qrcodes.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 text-center">
-            <div className="text-gray-400 mb-3">
+          <div className="bg-white dark:bg-slate-800 p-8 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 text-center">
+            <div className="text-slate-400 dark:text-slate-400 mb-3">
               <QrCodeIcon className="w-12 h-12 mx-auto opacity-50" />
             </div>
-            <p className="text-gray-500 dark:text-gray-300 text-xs">
+            <p className="text-slate-500 dark:text-slate-300 text-xs">
               No QR codes found. Generate one to get started!
             </p>
           </div>
         ) : (
           <div>
-            <h2 className="font-medium text-gray-900 dark:text-white mb-4 text-xs uppercase tracking-wide">
+            <h2 className="font-medium text-slate-900 dark:text-slate-100 mb-4 text-xs uppercase tracking-wide">
               Your QR Codes ({qrcodes.length})
             </h2>
             
@@ -652,14 +684,14 @@ export default function QRGenerator() {
               {qrcodes.map((qr) => (
                 <div
                   key={qr.id}
-                  className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer border border-gray-200 dark:border-gray-700"
+                  className="p-4 bg-white dark:bg-slate-800 rounded-lg shadow-sm hover:shadow-md transition-all cursor-pointer border border-slate-200 dark:border-slate-700"
                   onClick={() => openQRDialog(qr)}
                   role="button"
                   aria-label={`View QR code ${qr.code}`}
                 >
                   <div
                     id={`qr-img-${qr.id}`}
-                    className="mx-auto p-2 bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 mb-3"
+                    className="mx-auto p-2 bg-white dark:bg-slate-700 rounded-md border border-slate-200 dark:border-slate-600 mb-3"
                   >
                     {qr.image && !failedImages[qr.id] ? (
                       imageLoading[qr.id] ? (
@@ -684,7 +716,7 @@ export default function QRGenerator() {
                     )}
                   </div>
                   
-                  <p className="text-center font-medium text-gray-900 dark:text-white truncate mb-3 text-xs">
+                  <p className="text-center font-medium text-slate-900 dark:text-slate-100 truncate mb-3 text-xs">
                     {qr.code}
                   </p>
                   
@@ -694,7 +726,7 @@ export default function QRGenerator() {
                         e.stopPropagation();
                         handleCustomizeClick(qr);
                       }}
-                      className="px-2 py-1.5 bg-pink-600 text-white rounded-md hover:bg-pink-700 focus:outline-none focus:ring-1 focus:ring-pink-500 transition-colors duration-200 text-xs flex items-center justify-center"
+                      className="px-2 py-1.5 bg-indigo-500 text-white rounded-md hover:bg-gradient-to-r hover:from-indigo-700 hover:to-purple-700 dark:hover:from-indigo-600 dark:hover:to-purple-600 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-colors duration-200 text-xs flex items-center justify-center"
                       aria-label="Customize QR Code and Form"
                     >
                       <CogIcon className="w-3 h-3 mr-1" />
@@ -706,7 +738,7 @@ export default function QRGenerator() {
                         e.stopPropagation();
                         copyToClipboard(qr.url);
                       }}
-                      className="px-2 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-md flex items-center justify-center text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
+                      className="px-2 py-1.5 bg-slate-100 dark:bg-slate-700 rounded-md flex items-center justify-center text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors duration-200"
                       aria-label="Copy URL"
                     >
                       <ClipboardIcon className="w-3 h-3 mr-1" />
@@ -718,14 +750,14 @@ export default function QRGenerator() {
                         e.stopPropagation();
                         handleDownload(qr);
                       }}
-                      className="px-2 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-md flex items-center justify-center text-xs text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
+                      className="px-2 py-1.5 bg-slate-100 dark:bg-slate-700 rounded-md flex items-center justify-center text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors duration-200"
                       aria-label="Download QR code"
                     >
                       <ArrowDownTrayIcon className="w-3 h-3 mr-1" />
                       Download
                     </button>
-                    
-                    <button
+                    {/*  dont remove cooments  others delete buttons will not hide */}
+                    {/* <button
                       onClick={(e) => {
                         e.stopPropagation();
                         updateState({ qrToDelete: qr.id, showDeleteConfirm: true });
@@ -735,7 +767,7 @@ export default function QRGenerator() {
                     >
                       <TrashIcon className="w-3 h-3 mr-1" />
                       Delete
-                    </button>
+                    </button> */}
                   </div>
                 </div>
               ))}
