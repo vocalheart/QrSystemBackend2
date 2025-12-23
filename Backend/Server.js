@@ -22,7 +22,9 @@ const app = express();
 const port = process.env.PORT || 5000;
 // Middleware         
 app.use(helmet());
-app.use(express.json());
+
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(
   cors({
     origin: function (origin, callback) {
@@ -82,6 +84,11 @@ app.use((req, res, next) => {
 
 // ONLY FOR TESTING
 // Start server
-app.listen(port, () => {
+const server = app.listen(port, () => {
   console.log(`Server is running at http://localhost:${port}`);
 });
+
+// Increase global server timeouts
+server.timeout = 900000; // 15 minutes
+server.keepAliveTimeout = 900000;
+server.headersTimeout = 900000;
