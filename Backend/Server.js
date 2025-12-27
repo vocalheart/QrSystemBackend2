@@ -17,7 +17,7 @@ const CreateMember = require('./createmembers/createMembers');
 const status = require('./ApplicationStatus/Status');
 const colors = require('./colors/color');
 const documents = require('./documents/documents');
-
+const additinoalInformation = require('./documents/additional-info')
 const app = express();
 const port = process.env.PORT || 5000;
 // Middleware         
@@ -56,6 +56,7 @@ app.use('/api/auth', authRoute);
 app.use('/api', status);  
 app.use('/api', colors)
 app.use('/api', documents)
+app.use('/api', additinoalInformation)
 
 
 // Health check
@@ -91,4 +92,4 @@ const server = app.listen(port, () => {
 // Increase global server timeouts
 server.timeout = 900000; // 15 minutes
 server.keepAliveTimeout = 900000;
-server.headersTimeout = 900000;
+server.headersTimeout = 900000;                   

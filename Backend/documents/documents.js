@@ -40,88 +40,65 @@ const upload = multer({
 // =================================================================
 // UPLOAD MULTIPLE DOCUMENTS - NOW FLEXIBLE (1 to 4 files allowed)
 // =================================================================
-router.post(
-  "/upload-multiple",
-  authenticateToken,
-  (req, res, next) => {
-    req.setTimeout(900000);
-    res.setTimeout(900000);
-    req.socket.setTimeout(900000);
-    req.socket.setNoDelay(true);
-    next();
-  },
-  upload.array("documents"), // No fixed limit - accepts any number
+router.post("/documents/upload-multiple", authenticateToken, (req, res, next) => {
+  req.setTimeout(900000);
+  res.setTimeout(900000);
+  req.socket.setTimeout(900000);
+  req.socket.setNoDelay(true);
+  next();
+},
+  upload.array("documents"),
   async (req, res) => {
-    let connection = null;
+    let connection;
 
     try {
       const userId = req.user.id;
       const { form_submission_id } = req.body;
 
-      let documentTypes = [];
-      if (req.body.document_types) {
-        try {
-          documentTypes = JSON.parse(req.body.document_types);
-        } catch (e) {
-          return res.status(400).json({ error: "Invalid document_types format" });
-        }
-      }
-
-      // All Extra Fields - Optional
-      const extraFields = {
-        bank_account_number: req.body.bank_account_number?.trim() || null,
-        ifsc_code: req.body.ifsc_code?.trim() || null,
-        applicant_name: req.body.applicant_name?.trim() || null,
-        applicant_email: req.body.applicant_email?.trim() || null,
-        emergency_contact_number: req.body.emergency_contact_number?.trim() || null,
-        emergency_contact_name: req.body.emergency_contact_name?.trim() || null,
-        emergency_relation: req.body.emergency_relation?.trim() || null,
-        emergency_address: req.body.emergency_address?.trim() || null,
-        date_of_birth: req.body.date_of_birth?.trim() || null,
-        date_of_joining: req.body.date_of_joining?.trim() || null,
-      };
-
-      // Validation
       if (!form_submission_id) {
         return res.status(400).json({ error: "form_submission_id required" });
       }
-
       if (!req.files || req.files.length === 0) {
-        return res.status(400).json({ error: "At least one document is required" });
+        return res.status(400).json({ error: "At least one document required" });
       }
-
+      let documentTypes;
+      try {
+        documentTypes = JSON.parse(req.body.document_types);
+      } catch {
+        return res.status(400).json({ error: "Invalid document_types format" });
+      }
       if (!Array.isArray(documentTypes) || documentTypes.length !== req.files.length) {
-        return res.status(400).json({ error: "document_types must match the number of uploaded files" });
+        return res.status(400).json({
+          error: "document_types must match uploaded files count",
+        });
       }
-
       const allowedTypes = ["aadhaar", "pan", "driving_license", "bank_passbook"];
-      const typeSet = new Set();
-
+      const uniqueTypes = new Set();
       for (const type of documentTypes) {
         if (!allowedTypes.includes(type)) {
           return res.status(400).json({ error: `Invalid document type: ${type}` });
         }
-        if (typeSet.has(type)) {
+        if (uniqueTypes.has(type)) {
           return res.status(400).json({ error: `Duplicate document type: ${type}` });
         }
-        typeSet.add(type);
+        uniqueTypes.add(type);
       }
-
-      // Optional: Allow duplicates if you want, just remove the duplicate check above
-
       connection = await db.getConnection();
       await connection.beginTransaction();
-
+      //  Validate form_submission exists
+      const [form] = await connection.query(
+        "SELECT id FROM form_submissions WHERE id = ? AND user_id = ?",
+        [form_submission_id, userId]
+      );
+      if (!form.length) {
+        return res.status(404).json({ error: "Invalid form_submission_id" });
+      }
       const uploaded = [];
-
       for (let i = 0; i < req.files.length; i++) {
         const file = req.files[i];
         const type = documentTypes[i];
         const ext = path.extname(file.originalname).toLowerCase();
-        const timestamp = Date.now();
-        const randomStr = Math.random().toString(36).substring(2, 10);
-        const fileName = `uploads/${type}-${timestamp}-${randomStr}${ext}`;
-
+        const fileName = `uploads/${type}-${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
         await s3.send(
           new PutObjectCommand({
             Bucket: process.env.S3_BUCKET_NAME,
@@ -134,35 +111,15 @@ router.post(
         const fileUrl = `https://${process.env.S3_BUCKET_NAME}.s3.amazonaws.com/${fileName}`;
 
         const [result] = await connection.query(
-          `INSERT INTO documents 
-          (file_name, file_url, user_id, form_submission_id, document_type,
-           bank_account_number, ifsc_code, applicant_name, applicant_email,
-           emergency_contact_number, emergency_contact_name, emergency_relation, emergency_address,
-           date_of_birth, date_of_joining, uploaded_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
-          [
-            fileName,
-            fileUrl,
-            userId,
-            form_submission_id,
-            type,
-            extraFields.bank_account_number,
-            extraFields.ifsc_code,
-            extraFields.applicant_name,
-            extraFields.applicant_email,
-            extraFields.emergency_contact_number,
-            extraFields.emergency_contact_name,
-            extraFields.emergency_relation,
-            extraFields.emergency_address,
-            extraFields.date_of_birth,
-            extraFields.date_of_joining,
-          ]
+          `INSERT INTO documents
+           (user_id, form_submission_id, document_type, file_name, file_url)
+           VALUES (?, ?, ?, ?, ?)`,
+          [userId, form_submission_id, type, fileName, fileUrl]
         );
 
         uploaded.push({
           id: result.insertId,
           document_type: type,
-          file_name: fileName,
           file_url: fileUrl,
         });
       }
@@ -171,29 +128,13 @@ router.post(
 
       res.json({
         success: true,
-        message: `${req.files.length} document(s) uploaded successfully!`,
+        message: "Documents uploaded successfully",
         documents: uploaded,
       });
     } catch (err) {
-      if (connection) {
-        try {
-          await connection.rollback();
-        } catch (rollbackErr) {
-          console.error("Rollback failed:", rollbackErr);
-        }
-      }
-
-      console.error("Upload error:", err);
-
-      if (err.message.includes("Invalid file type")) {
-        return res.status(400).json({ error: err.message });
-      }
-
-      if (err.code === "ECONNRESET" || err.code === "ERR_STREAM_PREMATURE_CLOSE") {
-        return res.status(504).json({ error: "Upload interrupted. Please try again." });
-      }
-
-      res.status(500).json({ error: "Upload failed. Please try again later." });
+      if (connection) await connection.rollback();
+      console.error(err);
+      res.status(500).json({ error: "Upload failed" });
     } finally {
       if (connection) connection.release();
     }
@@ -201,145 +142,170 @@ router.post(
 );
 
 // =================================================================
-// UPDATE SINGLE DOCUMENT FILE (unchanged)
+// UPDATE / REPLACE DOCUMENT FILE
 // =================================================================
-router.put(
-  "/documents/:id",
+router.put("/documents/:docId", authenticateToken, upload.single("document"), async (req, res) => {
+  let connection;
+  try {
+    const userId = req.user.id;
+    const { docId } = req.params;
+    if (!req.file) {
+      return res.status(400).json({ error: "Document file required" });
+    }
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+
+    //   Get existing document
+    const [rows] = await connection.query(
+      `SELECT file_name, document_type 
+         FROM documents 
+         WHERE id = ? AND user_id = ?`,
+      [docId, userId]
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ error: "Document not found" });
+    }
+
+    const oldFileKey = rows[0].file_name;
+    const documentType = rows[0].document_type;
+
+    //  Delete old file from S3
+    await s3.send(
+      new DeleteObjectCommand({
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: oldFileKey,
+      })
+    );
+
+    // Upload new file
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    const newFileName = `uploads/${documentType}-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2)}${ext}`;
+
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: newFileName,
+        Body: req.file.buffer,
+        ContentType: req.file.mimetype,
+      })
+    );
+
+    const newFileUrl = `https://${process.env.S3_BUCKET_NAME}.s3.amazonaws.com/${newFileName}`;
+
+    //  Update DB
+    await connection.query(
+      `UPDATE documents 
+   SET file_name = ?, file_url = ?, uploaded_at = NOW()
+   WHERE id = ?`,
+      [newFileName, newFileUrl, docId]
+    );
+
+    const [updatedDoc] = await connection.query(
+      `SELECT * FROM documents WHERE id = ?`,
+      [docId]
+    );
+
+    await connection.commit();
+
+    res.json({
+      success: true,
+      message: "Document updated successfully",
+      data: updatedDoc[0]
+    });
+  } catch (err) {
+    if (connection) await connection.rollback();
+    console.error("Update document error:", err);
+    res.status(500).json({ error: "Failed to update document" });
+  } finally {
+    if (connection) connection.release();
+  }
+}
+);
+
+// =================================================================
+// GET DOCUMENTS BY FORM SUBMISSION ID
+// =================================================================
+router.get(
+  "/documents/form/:formSubmissionId",
   authenticateToken,
-  (req, res, next) => {
-    req.setTimeout(300000);
-    res.setTimeout(300000);
-    next();
-  },
-  upload.single("document"),
   async (req, res) => {
     try {
       const userId = req.user.id;
-      const docId = req.params.id;
+      const { formSubmissionId } = req.params;
 
-      if (!req.file) {
-        return res.status(400).json({ error: "New file is required" });
+      // Validate
+      if (!formSubmissionId) {
+        return res.status(400).json({ error: "formSubmissionId required" });
       }
 
-      const [rows] = await db.query(
-        "SELECT * FROM documents WHERE id = ? AND user_id = ?",
-        [docId, userId]
+      // Fetch documents
+      const [documents] = await db.query(
+        `SELECT 
+           id,
+           document_type,
+           file_url,
+           uploaded_at
+         FROM documents
+         WHERE form_submission_id = ?
+           AND user_id = ?
+         ORDER BY uploaded_at DESC`,
+        [formSubmissionId, userId]
       );
 
-      if (!rows.length) {
-        return res.status(404).json({ error: "Document not found" });
+      if (!documents.length) {
+        return res.status(404).json({ message: "No documents found" });
       }
 
-      const oldDoc = rows[0];
-      const ext = path.extname(req.file.originalname).toLowerCase();
-      const fileName = `uploads/${oldDoc.document_type}-${Date.now()}-${Math.random().toString(36).substring(2, 10)}${ext}`;
-
-      await s3.send(
-        new PutObjectCommand({
-          Bucket: process.env.S3_BUCKET_NAME,
-          Key: fileName,
-          Body: req.file.buffer,
-          ContentType: req.file.mimetype,
-        })
-      );
-
-      // Delete old file from S3
-      try {
-        await s3.send(
-          new DeleteObjectCommand({
-            Bucket: process.env.S3_BUCKET_NAME,
-            Key: oldDoc.file_name,
-          })
-        );
-      } catch (e) {
-        console.error("Failed to delete old file:", e);
-      }
-
-      const fileUrl = `https://${process.env.S3_BUCKET_NAME}.s3.amazonaws.com/${fileName}`;
-
-      await db.query(
-        `UPDATE documents SET file_name = ?, file_url = ?, updated_at = NOW() WHERE id = ?`,
-        [fileName, fileUrl, docId]
-      );
-
-      res.json({ success: true, message: "Document updated successfully" });
+      res.json({
+        success: true,
+        count: documents.length,
+        documents,
+      });
     } catch (err) {
-      console.error("Update error:", err);
-      res.status(500).json({ error: "Update failed" });
+      console.error("Get documents error:", err);
+      res.status(500).json({ error: "Failed to fetch documents" });
     }
   }
 );
 
+
 // =================================================================
-// UPDATE EXTRA FIELDS ONLY - USING DOCUMENT ID
+// GET DOCUMENTS BY FORM SUBMISSION ID
 // =================================================================
-router.put("/documents/update-extra/:docId", authenticateToken, async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const docId = req.params.docId;
+router.get("/documentss/visitor/:formSubmissionId",authenticateToken, async (req, res) => {
+  try {  
+    const userId = req.user.id; 
+   const { formSubmissionId } = req.params;
+      const [documents] = await db.query(
+        `SELECT 
+           id,
+           document_type,
+           file_name,
+           file_url,
+           uploaded_at
+         FROM documents
+         WHERE form_submission_id = ?
+           AND user_id = ?
+         ORDER BY uploaded_at DESC`,
+        [formSubmissionId, userId]
+      );
 
-    const {
-      bank_account_number,
-      ifsc_code,
-      applicant_name,
-      applicant_email,
-      emergency_contact_number,
-      emergency_contact_name,
-      emergency_relation,
-      emergency_address,
-      date_of_birth,
-      date_of_joining,
-    } = req.body;
-
-    // At least one field should be provided
-    if (
-      !bank_account_number && !ifsc_code && !applicant_name && !applicant_email &&
-      !emergency_contact_number && !emergency_contact_name && !emergency_relation &&
-      !emergency_address && !date_of_birth && !date_of_joining
-    ) {
-      return res.status(400).json({ error: "At least one field is required to update" });
+      res.json({
+        success: true,
+        user_id: userId,
+        form_submission_id: formSubmissionId,
+        count: documents.length,
+        documents,
+      });
+    } catch (err) {
+      console.error("Get documents error:", err);
+      res.status(500).json({ error: "Failed to fetch documents" });
     }
-
-    const [result] = await db.query(
-      `UPDATE documents SET 
-       bank_account_number = ?,
-       ifsc_code = ?,
-       applicant_name = ?,
-       applicant_email = ?,
-       emergency_contact_number = ?,
-       emergency_contact_name = ?,
-       emergency_relation = ?,
-       emergency_address = ?,
-       date_of_birth = ?,
-       date_of_joining = ?,
-       updated_at = NOW()
-       WHERE id = ? AND user_id = ?`,
-      [
-        bank_account_number?.trim() || null,
-        ifsc_code?.trim() || null,
-        applicant_name?.trim() || null,
-        applicant_email?.trim() || null,
-        emergency_contact_number?.trim() || null,
-        emergency_contact_name?.trim() || null,
-        emergency_relation?.trim() || null,
-        emergency_address?.trim() || null,
-        date_of_birth?.trim() || null,
-        date_of_joining?.trim() || null,
-        docId,
-        userId,
-      ]
-    );
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: "Document not found or access denied" });
-    }
-
-    res.json({ success: true, message: "Additional information updated successfully" });
-  } catch (err) {
-    console.error("Update extra error:", err);
-    res.status(500).json({ error: "Failed to update additional information" });
   }
-});
+);
 
 // =================================================================
 // GET FORMS WITH DOCUMENTS
@@ -353,7 +319,9 @@ router.get("/form", authenticateToken, async (req, res) => {
     const limit = 10;
     const offset = (page - 1) * limit;
 
-    // Main query (with LIMIT & OFFSET)
+    // ==========================
+    // MAIN QUERY (CLEAN VERSION)
+    // ==========================
     const sql = `
       SELECT 
         fs.id AS form_id,
@@ -376,35 +344,32 @@ router.get("/form", authenticateToken, async (req, res) => {
         fs.color_id,
 
         d.id AS document_id,
+        d.document_type,
         d.file_name,
         d.file_url,
-        d.uploaded_at,
-        d.document_type,
-        d.bank_account_number,
-        d.ifsc_code,
-        d.applicant_name,
-        d.applicant_email,
-        d.emergency_contact_number,
-        d.emergency_contact_name,
-        d.emergency_relation,
-        d.emergency_address,
-        d.date_of_birth,
-        d.date_of_joining
+        d.uploaded_at
+
       FROM form_submissions fs
-      LEFT JOIN documents d ON fs.id = d.form_submission_id
-      WHERE fs.user_id = ? AND fs.color_id = 1
+      LEFT JOIN documents d 
+        ON fs.id = d.form_submission_id
+      WHERE fs.user_id = ?
+        AND fs.color_id = 1
       ORDER BY fs.created_at DESC
       LIMIT ? OFFSET ?
     `;
 
     const [rows] = await db.query(sql, [userId, limit, offset]);
 
-    // Total count (for frontend pagination)
+    // ==========================
+    // TOTAL COUNT (PAGINATION)
+    // ==========================
     const countSql = `
-      SELECT COUNT(*) as total
+      SELECT COUNT(*) AS total
       FROM form_submissions
-      WHERE user_id = ? AND color_id = 1
+      WHERE user_id = ?
+        AND color_id = 1
     `;
+
     const [[countResult]] = await db.query(countSql, [userId]);
     const totalRecords = countResult.total;
     const totalPages = Math.ceil(totalRecords / limit);
@@ -418,11 +383,15 @@ router.get("/form", authenticateToken, async (req, res) => {
           limit,
           totalRecords,
           totalPages,
+          hasNextPage: false,
+          hasPrevPage: false,
         },
       });
     }
 
-    // Grouping forms with documents
+    // ==========================
+    // GROUP FORMS + DOCUMENTS
+    // ==========================
     const formsMap = new Map();
 
     rows.forEach((row) => {
@@ -453,24 +422,17 @@ router.get("/form", authenticateToken, async (req, res) => {
       if (row.document_id) {
         formsMap.get(row.form_id).documents.push({
           id: row.document_id,
+          document_type: row.document_type,
           file_name: row.file_name,
           file_url: row.file_url,
           uploaded_at: row.uploaded_at,
-          document_type: row.document_type,
-          bank_account_number: row.bank_account_number,
-          ifsc_code: row.ifsc_code,
-          applicant_name: row.applicant_name,
-          applicant_email: row.applicant_email,
-          emergency_contact_number: row.emergency_contact_number,
-          emergency_contact_name: row.emergency_contact_name,
-          emergency_relation: row.emergency_relation,
-          emergency_address: row.emergency_address,
-          date_of_birth: row.date_of_birth,
-          date_of_joining: row.date_of_joining,
         });
       }
     });
 
+    // ==========================
+    // FINAL RESPONSE
+    // ==========================
     res.json({
       success: true,
       data: Array.from(formsMap.values()),
@@ -488,6 +450,7 @@ router.get("/form", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Failed to load forms" });
   }
 });
+
 
 
 module.exports = router;
