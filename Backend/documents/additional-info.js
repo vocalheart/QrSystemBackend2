@@ -4,17 +4,11 @@ const db = require("../database/mysql");
 const router = express.Router();
 const authenticateToken = require("../middleware/AuthenticationToken");
 
-router.post(
-  "/documents/additional-info",
-  authenticateToken,
-  async (req, res) => {
+router.post("/documents/additional-info", authenticateToken, async (req, res) => {
     let connection;
     try {
       const userId = req.user.id;
-      const {
-        form_submission_id,
-        bank_account_number,
-        ifsc_code,
+      const {form_submission_id,bank_account_number,ifsc_code,
         applicant_name,
         applicant_email,
         emergency_contact_number,

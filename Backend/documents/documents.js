@@ -306,22 +306,59 @@ router.get("/documentss/visitor/:formSubmissionId",authenticateToken, async (req
     }
   }
 );
-
-// =================================================================
-// GET FORMS WITH DOCUMENTS
-// =================================================================
 router.get("/form", authenticateToken, async (req, res) => {
+  let connection;
+
   try {
     const userId = req.user.id;
+    const { colorOnly } = req.query;
 
-    // Pagination
-    const page = parseInt(req.query.page) || 1;
-    const limit = 10;
-    const offset = (page - 1) * limit;
+    // ───────────────────────────────────────────────────────────────
+    // MODE 1: Color-only mode (for admin/HR overview)
+    // Returns ALL records where color_id = 1 (flat list, no documents)
+    // Example: GET /form?colorOnly=true
+    // ───────────────────────────────────────────────────────────────
+    if (colorOnly === "true") {
+      const [rows] = await db.query(
+        `SELECT 
+           id,
+           qr_code_id,
+           user_id,
+           name,
+           email,
+           number,
+           created_at,
+           resume,
+           reason,
+           application_type,
+           status,
+           reviewed,
+           designation,
+           department_name,
+           resume_url,
+           updated_at,
+           comments,
+           color_id
+         FROM form_submissions
+         WHERE color_id = 1
+         ORDER BY created_at DESC`
+      );
 
-    // ==========================
-    // MAIN QUERY (CLEAN VERSION)
-    // ==========================
+      return res.json({
+        success: true,
+        color_id: 1,
+        total: rows.length,
+        data: rows,
+      });
+    }
+
+    // ───────────────────────────────────────────────────────────────
+    // MODE 2: User's own forms (only color_id = 1)
+    // Returns ALL submissions for the current user where color_id = 1
+    // with their associated documents (grouped)
+    // ───────────────────────────────────────────────────────────────
+    connection = await db.getConnection();
+
     const sql = `
       SELECT 
         fs.id AS form_id,
@@ -348,50 +385,25 @@ router.get("/form", authenticateToken, async (req, res) => {
         d.file_name,
         d.file_url,
         d.uploaded_at
-
       FROM form_submissions fs
       LEFT JOIN documents d 
         ON fs.id = d.form_submission_id
       WHERE fs.user_id = ?
         AND fs.color_id = 1
       ORDER BY fs.created_at DESC
-      LIMIT ? OFFSET ?
     `;
 
-    const [rows] = await db.query(sql, [userId, limit, offset]);
-
-    // ==========================
-    // TOTAL COUNT (PAGINATION)
-    // ==========================
-    const countSql = `
-      SELECT COUNT(*) AS total
-      FROM form_submissions
-      WHERE user_id = ?
-        AND color_id = 1
-    `;
-
-    const [[countResult]] = await db.query(countSql, [userId]);
-    const totalRecords = countResult.total;
-    const totalPages = Math.ceil(totalRecords / limit);
+    const [rows] = await connection.query(sql, [userId]);
 
     if (!rows.length) {
       return res.json({
         success: true,
         data: [],
-        pagination: {
-          page,
-          limit,
-          totalRecords,
-          totalPages,
-          hasNextPage: false,
-          hasPrevPage: false,
-        },
+        total: 0,
       });
     }
 
-    // ==========================
-    // GROUP FORMS + DOCUMENTS
-    // ==========================
+    // Group forms + their documents
     const formsMap = new Map();
 
     rows.forEach((row) => {
@@ -430,27 +442,23 @@ router.get("/form", authenticateToken, async (req, res) => {
       }
     });
 
-    // ==========================
-    // FINAL RESPONSE
-    // ==========================
+    const result = Array.from(formsMap.values());
+
     res.json({
       success: true,
-      data: Array.from(formsMap.values()),
-      pagination: {
-        page,
-        limit,
-        totalRecords,
-        totalPages,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1,
-      },
+      data: result,
+      total: result.length,
     });
   } catch (err) {
-    console.error("Fetch error:", err);
-    res.status(500).json({ error: "Failed to load forms" });
+    console.error("Fetch forms error:", err);
+    res.status(500).json({ 
+      success: false,
+      error: "Failed to load forms" 
+    });
+  } finally {
+    if (connection) connection.release();
   }
 });
-
 
 
 module.exports = router;
