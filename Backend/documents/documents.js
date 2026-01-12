@@ -394,7 +394,8 @@ router.get("/form", authenticateToken, async (req, res) => {
            resume_url,
            updated_at,
            comments,
-           color_id
+           color_id,
+           working_status,
          FROM form_submissions
          WHERE color_id = 1
          ORDER BY created_at DESC`
@@ -434,6 +435,7 @@ router.get("/form", authenticateToken, async (req, res) => {
         fs.resume_url,
         fs.updated_at,
         fs.comments,
+        fs.working_status,
         fs.color_id,
         d.id AS document_id,
         d.document_type,
@@ -481,6 +483,7 @@ router.get("/form", authenticateToken, async (req, res) => {
           updated_at: row.updated_at,
           comments: row.comments,
           color_id: row.color_id,
+          working_status: row.working_status,
           documents: [],
         });
       }

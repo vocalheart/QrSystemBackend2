@@ -18,6 +18,8 @@ const status = require('./ApplicationStatus/Status');
 const colors = require('./colors/color');
 const documents = require('./documents/documents');
 const additinoalInformation = require('./documents/additional-info')
+const workingStatus = require('./documents/workingstatus');
+
 const app = express();
 const port = process.env.PORT || 5000;
 // Middleware         
@@ -57,6 +59,7 @@ app.use('/api', status);
 app.use('/api', colors)
 app.use('/api', documents)
 app.use('/api', additinoalInformation)
+app.use('/api', workingStatus)
 
 
 // Health check
